@@ -1,0 +1,16 @@
+OASISFormat: 0.4
+Name:        mdns
+Version:     0.0.1
+Synopsis:    Multicast DNS responder and resolver in OCaml
+Authors:     Luke Dunstan
+License:     ISC
+Plugins:     META (0.3)
+
+Executable "mdns_resolve"
+  Path:             lib_test/unix
+  BuildTools:       ocamlbuild
+  MainIs:           mdns_resolve.ml
+  BuildDepends:     lwt, lwt.unix, lwt.syntax, dns, dns.lwt, ipaddr
+  CompiledObject:   byte
+  Custom:           true
+
