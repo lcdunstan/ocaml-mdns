@@ -1,0 +1,33 @@
+opam-version: "1"
+package: "mdns"
+maintainer: "LukeDunstan81@gmail.com"
+authors: [
+  "Luke Dunstan"
+]
+homepage: "https://github.com/infidel/ocaml-mdns"
+license: "ISC"
+build: [
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--%{base-unix:enable}%-lwt" "--%{mirage-types:enable}%-mirage"]
+  ["ocaml" "setup.ml" "-build"]
+  ["ocaml" "setup.ml" "-install"]
+]
+remove: [["ocamlfind" "remove" "mdns"]]
+depends: [
+  "lwt" {>= "2.4.3"}
+  "cstruct" {>= "1.0.1"}
+  "ocamlfind"
+  "re"
+  "cmdliner"
+  "ipaddr" {>= "2.2.0"}
+  "base64"
+  "dns" {>= 0.11.0}
+]
+depopts: [
+  ("mirage-types" & "tcpip")
+  "async"
+]
+conflicts: [
+  "mirage-types" {<"1.2.0"}
+  "async" {<"109.21.00"}
+]
+ocaml-version: [>= "4.01.0"]
