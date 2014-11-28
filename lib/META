@@ -1,0 +1,22 @@
+# OASIS_START
+# DO NOT EDIT (digest: 864566d009ce87bc0e586b407fb41692)
+version = "0.0.1"
+description = "Multicast DNS responder and resolver in OCaml"
+requires = "cstruct re re.str ipaddr base64 dns"
+archive(byte) = "mdns.cma"
+archive(byte, plugin) = "mdns.cma"
+archive(native) = "mdns.cmxa"
+archive(native, plugin) = "mdns.cmxs"
+exists_if = "mdns.cma"
+package "lwt-core" (
+ version = "0.0.1"
+ description = "Multicast DNS responder and resolver in OCaml"
+ requires = "mdns lwt.unix cstruct.lwt dns dns.lwt-core ipaddr.unix"
+ archive(byte) = "mdns-lwt-core.cma"
+ archive(byte, plugin) = "mdns-lwt-core.cma"
+ archive(native) = "mdns-lwt-core.cmxa"
+ archive(native, plugin) = "mdns-lwt-core.cmxs"
+ exists_if = "mdns-lwt-core.cma"
+)
+# OASIS_STOP
+

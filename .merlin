@@ -1,8 +1,13 @@
-PKG lwt cstruct mirage-net-unix mirage dns
 EXT lwt
+
+PKG lwt
+PKG lwt.syntax
+PKG lwt.unix
+PKG cstruct mirage-net-unix mirage dns
 
 S lib
 S lib_test
+S lib_test/mirage
 S lwt
 S mirage
 B _build/lib

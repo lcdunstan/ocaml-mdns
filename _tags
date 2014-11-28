@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3ba57470f3f00e1c27e89d92201ad50a)
+# DO NOT EDIT (digest: 490639f227c130e71e90e3a0186850a1)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,6 +14,31 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Library mdns
+"lib/mdns.cmxs": use_mdns
+"lib/protocol.cmx": for-pack(Mdns)
+<lib/*.ml{,i,y}>: pkg_base64
+<lib/*.ml{,i,y}>: pkg_cstruct
+<lib/*.ml{,i,y}>: pkg_cstruct.syntax
+<lib/*.ml{,i,y}>: pkg_dns
+<lib/*.ml{,i,y}>: pkg_ipaddr
+<lib/*.ml{,i,y}>: pkg_re
+<lib/*.ml{,i,y}>: pkg_re.str
+# Library mdns-lwt-core
+"lwt/mdns-lwt-core.cmxs": use_mdns-lwt-core
+<lwt/*.ml{,i,y}>: pkg_base64
+<lwt/*.ml{,i,y}>: pkg_cstruct
+<lwt/*.ml{,i,y}>: pkg_cstruct.lwt
+<lwt/*.ml{,i,y}>: pkg_cstruct.syntax
+<lwt/*.ml{,i,y}>: pkg_dns
+<lwt/*.ml{,i,y}>: pkg_dns.lwt-core
+<lwt/*.ml{,i,y}>: pkg_ipaddr
+<lwt/*.ml{,i,y}>: pkg_ipaddr.unix
+<lwt/*.ml{,i,y}>: pkg_lwt.syntax
+<lwt/*.ml{,i,y}>: pkg_lwt.unix
+<lwt/*.ml{,i,y}>: pkg_re
+<lwt/*.ml{,i,y}>: pkg_re.str
+<lwt/*.ml{,i,y}>: use_mdns
 # Executable mdns_resolve
 "lib_test/unix/mdns_resolve.byte": pkg_dns
 "lib_test/unix/mdns_resolve.byte": pkg_dns.lwt
@@ -27,4 +52,5 @@ true: annot, bin_annot
 <lib_test/unix/*.ml{,i,y}>: pkg_lwt
 <lib_test/unix/*.ml{,i,y}>: pkg_lwt.syntax
 <lib_test/unix/*.ml{,i,y}>: pkg_lwt.unix
+"lib_test/unix/mdns_resolve.byte": custom
 # OASIS_STOP
