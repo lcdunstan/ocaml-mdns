@@ -33,8 +33,10 @@
 
 Relevant RFCs:
 - https://tools.ietf.org/html/rfc6762 - Multicast DNS
+* https://tools.ietf.org/html/rfc6763 - DNS-SD
 - https://tools.ietf.org/html/rfc1034 - DNS concepts
 - https://tools.ietf.org/html/rfc1035 - DNS specification
+- https://tools.ietf.org/html/rfc2782 - DNS SRV RR
 - https://tools.ietf.org/html/rfc4033 - DNSSEC concepts
 - https://tools.ietf.org/html/rfc4034 - DNSSEC RRs
 - https://tools.ietf.org/html/rfc1112 - IPv4 multicast
@@ -75,7 +77,7 @@ Common and low-level modules:
 Changes to ocaml-dns
 - Do not process queries for \*.local
 
-## Resolver algorithm
+## DNS Resolver algorithm
 
 - Platform-specific code defines the commfn record containing txfn, rxfn, timerfn and cleanfn
 - Call Dns.Packet.create to build a query packet
@@ -120,7 +122,7 @@ Changes to ocaml-dns
 (8.3) Announcing, e.g. on interface start-up (after successful probing)
 (8.4) Updating, i.e. repeating announcements when data changes
 (9) Conflict resolution, unique name generation, limit to 60 seconds
-(10) Host names TTL=120s, other TTL=75s
+(10) Host names TTL=120s, other TTL=75 minutes
 (10.1) Goodbye packets (TTL=0)
 (10.2) Cache flush announcements (unique), 1-second delay, bridge handling
 (10.3) Cache flush on topology change
@@ -168,6 +170,45 @@ Port 53 vs port 5353
 (18.14) Compression not used for SRV vs compression supported for SRV
 (19) Query ID field echoed vs query ID field ignored (except legacy)
 (19) Question repeated in response vs question repeat not required
+
+## mDNS Resolver Algorithm
+
+- If there is already a record in the cache
+  - If less than 80% of the TTL has expired
+    - Return the cached record and skip the rest of the algorithm below
+  - If 100% of the TTL has expired (refresh counter = 4)
+    - Delete the cached record and continue
+  - Else If at least 95% (+0-2% random) of the TTL has expired
+    - Increment the refresh counter
+  - Else If at least 90% (+0-2% random) of the TTL has expired
+    - Increment the refresh counter
+  - Else If at least 85% (+0-2% random) of the TTL has expired
+    - Increment the refresh counter
+  - Else If at least 80% (+0-2% random) of the TTL has expired
+    - Increment the refresh counter
+- Optional: combine multiple questions into one query (5.3)
+- Platform-specific code defines the commfn record containing txfn, rxfn, timerfn and cleanfn
+- Call Dns.Packet.create to build a query packet
+  - Include "known answers"
+- Dns_resolver.resolve calls send_pkt to do the work and catches any exceptions
+- send_pkt calls Dns.Protocol.Client.marshal to get the bytes for the query
+- A Lwt.wait pair is created for synchronisation
+- Two threads are created in parallel: send and receive
+  - The send thread calls txfn (e.g. sendto) to send the message, then sleeps for 5 seconds
+    - If the sleep completes then a time-out Error is signalled
+  - The receive thread calls rxfn (e.g. recvfrom) to wait for a response
+    - If the receive fails, or if decoding the response fails, then an Error is signalled
+    - Otherwise, if the response is decoded successfully then an Answer is signalled
+- send_pkt waits for an Answer, or for both threads to return Error
+- If Timeout
+  - Wait one second for the first retry (5.2)
+  - Double the delay after that (5.2)
+  - Cap to 60 minutes + 20-120 ms (5.2)
+- If successful
+  - Store the result in a cache
+  - Reset the cache refresh counter to zero
+
+- Periodic cache refresh
 
 ## mDNS Responder Algorithm
 
