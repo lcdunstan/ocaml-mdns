@@ -8,6 +8,7 @@ fake4.local.            4500    IN  CNAME   fake1.local.
 
 router1                 120     IN  A   192.168.2.1
 laptop1                 120     IN  A   192.168.2.101
+mirage1                 120     IN  A   10.0.0.2
 
 ; RFC 2782 service record
 _foobar._tcp            120     IN  SRV 0   0   9    fake1.local.
