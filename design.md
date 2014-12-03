@@ -37,6 +37,7 @@ Relevant RFCs:
 - https://tools.ietf.org/html/rfc1034 - DNS concepts
 - https://tools.ietf.org/html/rfc1035 - DNS specification
 - https://tools.ietf.org/html/rfc2782 - DNS SRV RR
+- https://tools.ietf.org/html/rfc6891 - EDNS
 - https://tools.ietf.org/html/rfc4033 - DNSSEC concepts
 - https://tools.ietf.org/html/rfc4034 - DNSSEC RRs
 - https://tools.ietf.org/html/rfc1112 - IPv4 multicast
