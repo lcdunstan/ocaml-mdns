@@ -20,57 +20,61 @@ open Printf
 
 module DR = Dns.RR
 module DP = Dns.Packet
+module DS = Dns.Protocol.Server
 
-type ip_endpoint = Ipaddr.t * int
+type ip_endpoint = Ipaddr.V4.t * int
 
-type 'a process = src:ip_endpoint -> dst:ip_endpoint -> 'a -> Dns.Query.answer option Lwt.t
+type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
 
-module type PROCESSOR = sig
-  include Dns.Protocol.SERVER
-  val process : context process
-end
+type commfn = {
+  allocfn : unit -> Dns.Buf.t;
+  txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
+}
 
-type 'a processor = (module PROCESSOR with type context = 'a)
+let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
 
-let process_buffer buf len obuf src dst processor =
-  let module Processor = (val processor : PROCESSOR) in
-  match Processor.parse (Dns.Buf.sub buf 0 len) with
-  |None -> return None
-  |Some ctxt -> begin
-    lwt answer = Processor.process ~src ~dst ctxt in
-    match answer with
-    |None -> return None
-    |Some answer ->
-      let query = Processor.query_of_context ctxt in
-      let response = Dns.Query.response_of_answer query answer in
-      return (Processor.marshal obuf ctxt response)
- end
-
-let processor_of_process process : Dns.Packet.t processor =
-  let module P = struct
-    include Dns.Protocol.Server
-
-    let process = process
-  end in
-  (module P)
-
-let process_of_zonebufs zonebufs =
+let process_of_zonebufs zonebufs commfn =
   let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
     (Dns.Loader.new_db ()) zonebufs in
   let dnstrie = db.Dns.Loader.trie in
-  let get_answer qname qtype id =
-    let qname = List.map String.lowercase qname in
-    Dns.Query.answer ~dnssec:true (*~mdns:true*) qname qtype dnstrie
+  let get_answer questions =
+    (* DNSSEC disabled for testing *)
+    Dns.Query.answer_multiple ~dnssec:false ~mdns:true questions dnstrie
   in
-  fun ~src ~dst d ->
+  let callback ~src ~dst ibuf =
     let open DP in
-    (* TODO: FIXME so that 0 question queries don't crash the server *)
-    let q = List.hd d.questions in
-    let r =
-      Dns.Protocol.contain_exc "answer"
-        (fun () -> get_answer q.q_name q.q_type d.id)
-    in
-    return r
+    match DS.parse ibuf with
+    | None -> return ()
+    | Some dp when dp.detail.qr = Query ->
+      begin
+        match Dns.Protocol.contain_exc "answer" (fun () -> get_answer dp.questions) with
+        | None -> return ()
+        | Some answer ->
+          let obuf = commfn.allocfn () in
+          let response = Dns.Query.response_of_answer ~mdns:true dp answer in
+          if response.answers = [] then
+            begin
+              printf "No answers\n%!";
+              return ()
+            end
+          else
+            match DS.marshal obuf dp response with
+            | None -> return ()
+            | Some obuf ->
+              let src_host, src_port = src in
+              let legacy = (src_port != 5353) in
+              let dest_host = if legacy then src_host else multicast_ip in
+              commfn.txfn (dest_host,src_port) obuf
+      end
 
-let process_of_zonebuf zonebuf =
-  process_of_zonebufs [zonebuf] 
+    | Some dp ->
+      (* TODO: process responses *)
+      printf "Response ignored.\n%!";
+      return ()
+  in
+  callback
+
+
+let process_of_zonebuf zonebuf commfn =
+  process_of_zonebufs [zonebuf] commfn
+

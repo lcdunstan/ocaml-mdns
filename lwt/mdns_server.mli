@@ -15,31 +15,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-type ip_endpoint = Ipaddr.t * int
+type ip_endpoint = Ipaddr.V4.t * int
 
-type 'a process = src:ip_endpoint -> dst:ip_endpoint -> 'a -> Dns.Query.answer option Lwt.t
+type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
 
-module type PROCESSOR = sig
-  include Dns.Protocol.SERVER
+type commfn = {
+  allocfn : unit -> Dns.Buf.t;
+  txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
+}
 
-  (** DNS responder function.
-      @param src Server sockaddr
-      @param dst Client sockaddr
-      @param Query packet
-      @return Answer packet
-  *)
-  val process : context process
-end
+val process_of_zonebufs :
+  string list ->
+  commfn ->
+  process
 
-type 'a processor = (module PROCESSOR with type context = 'a)
+val process_of_zonebuf :
+  string ->
+  commfn ->
+  process
 
-
-(** [process_buffer ibuf ibuflen obuf src dst processor] *)
-val process_buffer: Dns.Buf.t -> int -> Dns.Buf.t -> ip_endpoint -> ip_endpoint -> 
-  (module PROCESSOR) -> Dns.Buf.t option Lwt.t
-
-val processor_of_process : Dns.Packet.t process -> Dns.Packet.t processor
-
-val process_of_zonebufs : string list -> Dns.Packet.t process
-
-val process_of_zonebuf : string -> Dns.Packet.t process
