@@ -35,6 +35,8 @@ install:
 	ocamlfind remove $(NAME) $(OFLAGS)
 	./setup.bin -install
 
+reinstall: clean build install
+
 setup.bin: setup.ml
 	ocamlopt.opt -o $@ $< || ocamlopt -o $@ $< || ocamlc -o $@ $<
 	$(RM) setup.cmx setup.cmi setup.o setup.cmo
