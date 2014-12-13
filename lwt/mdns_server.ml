@@ -26,10 +26,15 @@ type ip_endpoint = Ipaddr.V4.t * int
 
 type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
 
+type unique = Unique | Shared
+
 type commfn = {
   allocfn : unit -> Dns.Buf.t;
   txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
 }
+
+let delay_of_answer answer =
+  0.0
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
 
@@ -45,12 +50,21 @@ let process_of_zonebufs zonebufs commfn =
     let open DP in
     match DS.parse ibuf with
     | None -> return ()
+    | Some dp when dp.detail.opcode != Standard ->
+      (* RFC 6762 section 18.3 *)
+      return ()
+    | Some dp when dp.detail.rcode != NoError ->
+      (* RFC 6762 section 18.11 *)
+      return ()
     | Some dp when dp.detail.qr = Query ->
       begin
         match Dns.Protocol.contain_exc "answer" (fun () -> get_answer dp.questions) with
         | None -> return ()
         | Some answer ->
-          let obuf = commfn.allocfn () in
+          (* RFC 6762 section 18.5 - TODO: check tc bit *)
+          (* RFC 6762 section 7.1 - TODO: Known Answer Suppression *)
+          let delay = delay_of_answer answer in
+          Lwt_unix.sleep delay >>= fun () ->
           let response = Dns.Query.response_of_answer ~mdns:true dp answer in
           if response.answers = [] then
             begin
@@ -58,6 +72,7 @@ let process_of_zonebufs zonebufs commfn =
               return ()
             end
           else
+            let obuf = commfn.allocfn () in
             match DS.marshal obuf dp response with
             | None -> return ()
             | Some obuf ->
@@ -69,6 +84,7 @@ let process_of_zonebufs zonebufs commfn =
 
     | Some dp ->
       (* TODO: process responses *)
+      (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
       printf "Response ignored.\n%!";
       return ()
   in

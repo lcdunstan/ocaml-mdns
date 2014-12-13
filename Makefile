@@ -45,3 +45,7 @@ mirtest: install
 	cd lib_test/mirage && mirage configure --unix
 	$(MAKE) -C lib_test/mirage
 
+# https://forge.ocamlcore.org/tracker/index.php?func=detail&aid=1363&group_id=162&atid=730
+test: build
+	./setup.bin -test -runner sequential
+

@@ -19,6 +19,8 @@ type ip_endpoint = Ipaddr.V4.t * int
 
 type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
 
+type unique = Unique | Shared
+
 type commfn = {
   allocfn : unit -> Dns.Buf.t;
   txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;

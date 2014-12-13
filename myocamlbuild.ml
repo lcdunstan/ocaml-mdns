@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 04ca3ab8a4a7ca8837fb36e810b9fea4) *)
+(* DO NOT EDIT (digest: 55ce8cca8620608e0f82c4756b356c4e) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -611,7 +611,7 @@ let package_default =
        [("mdns", ["lib"], []); ("mdns-lwt-core", ["lwt"], [])];
      lib_c = [];
      flags = [];
-     includes = [("lwt", ["lib"])]
+     includes = [("lwt", ["lib"]); ("lib_test/ounit", ["lwt"])]
   }
   ;;
 

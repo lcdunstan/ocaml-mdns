@@ -83,4 +83,18 @@ Executable "mdns_resolve"
   Custom:           true
   Install:          false
 
+Executable test
+  Path:               lib_test/ounit
+  MainIs:             test.ml
+  Build$:             flag(tests)
+  Custom:             true
+  CompiledObject:     best
+  Install:            false
+  BuildDepends:       mdns.lwt-core, unix, oUnit, pcap-format
+
+Test test
+  Run$:               flag(tests)
+  Command:            $test
+  WorkingDirectory:   lib_test/ounit
+
 
