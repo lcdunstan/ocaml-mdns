@@ -21,6 +21,7 @@ open Printf
 module DR = Dns.RR
 module DP = Dns.Packet
 module DS = Dns.Protocol.Server
+module DQ = Dns.Query
 
 type ip_endpoint = Ipaddr.V4.t * int
 
@@ -31,10 +32,8 @@ type unique = Unique | Shared
 type commfn = {
   allocfn : unit -> Dns.Buf.t;
   txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
+  sleepfn : float -> unit Lwt.t;
 }
-
-let delay_of_answer answer =
-  0.0
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
 
@@ -44,9 +43,10 @@ let process_of_zonebufs zonebufs commfn =
   let dnstrie = db.Dns.Loader.trie in
   let get_answer questions =
     (* DNSSEC disabled for testing *)
-    Dns.Query.answer_multiple ~dnssec:false ~mdns:true questions dnstrie
+    DQ.answer_multiple ~dnssec:false ~mdns:true questions dnstrie
   in
   let callback ~src ~dst ibuf =
+    MProf.Trace.label "mDNS process";
     let open DP in
     match DS.parse ibuf with
     | None -> return ()
@@ -61,11 +61,18 @@ let process_of_zonebufs zonebufs commfn =
         match Dns.Protocol.contain_exc "answer" (fun () -> get_answer dp.questions) with
         | None -> return ()
         | Some answer ->
+          let src_host, src_port = src in
+          let legacy = (src_port != 5353) in
+          let dest_host = if legacy then src_host else multicast_ip in
           (* RFC 6762 section 18.5 - TODO: check tc bit *)
           (* RFC 6762 section 7.1 - TODO: Known Answer Suppression *)
-          let delay = delay_of_answer answer in
-          Lwt_unix.sleep delay >>= fun () ->
-          let response = Dns.Query.response_of_answer ~mdns:true dp answer in
+          (* TODO: zero delay for records that have been verified as unique *)
+          (* Delay response for 20-120 ms *)
+          let delay = if legacy then 0.0 else 0.02 +. Random.float 0.1 in
+          commfn.sleepfn delay >>= fun () ->
+          MProf.Trace.label "post delay";
+          (* NOTE: echoing of questions is still required for legacy mode *)
+          let response = DQ.response_of_answer ~mdns:(not legacy) dp answer in
           if response.answers = [] then
             begin
               printf "No answers\n%!";
@@ -76,9 +83,7 @@ let process_of_zonebufs zonebufs commfn =
             match DS.marshal obuf dp response with
             | None -> return ()
             | Some obuf ->
-              let src_host, src_port = src in
-              let legacy = (src_port != 5353) in
-              let dest_host = if legacy then src_host else multicast_ip in
+              (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
               commfn.txfn (dest_host,src_port) obuf
       end
 

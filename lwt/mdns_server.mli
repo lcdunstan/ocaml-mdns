@@ -24,6 +24,7 @@ type unique = Unique | Shared
 type commfn = {
   allocfn : unit -> Dns.Buf.t;
   txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
+  sleepfn : float -> unit Lwt.t;
 }
 
 val process_of_zonebufs :

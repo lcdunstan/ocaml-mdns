@@ -40,7 +40,7 @@ Library "mdns-lwt-core"
   Install$: flag(lwt)
   Findlibname: lwt-core
   Modules: Mdns_server
-  BuildDepends: mdns, lwt.unix (>= 2.4.1), cstruct.lwt, lwt.syntax, dns, dns.lwt-core, ipaddr.unix
+  BuildDepends: mdns, lwt.unix (>= 2.4.1), cstruct.lwt, lwt.syntax, dns, dns.lwt-core, ipaddr.unix, mirage-profile
   XMetaRequires: mdns, lwt.unix, cstruct.lwt, dns, dns.lwt-core, ipaddr.unix
   FindlibParent: mdns
 
