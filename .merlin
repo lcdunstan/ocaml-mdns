@@ -4,6 +4,7 @@ PKG lwt
 PKG lwt.syntax
 PKG lwt.unix
 PKG cstruct mirage-net-unix mirage dns
+PKG pcap-format oUnit
 
 S lib
 S lib_test
