@@ -284,6 +284,25 @@ let tests =
           ) packet.additionals;
       );
 
+    "q-PTR-known" >:: (fun test_ctxt ->
+        let txfn addr buf =
+          assert_failure "txfn shouldn't be called"
+        in
+        let sleepfn t =
+          assert_failure "sleepfn shouldn't be called"
+        in
+        let commfn = Mdns_server.({allocfn; txfn; sleepfn}) in
+        let zonebuf = load_file "test_mdns.zone" in
+        let process = Mdns_server.process_of_zonebuf zonebuf commfn in
+        let raw = load_packet "q-PTR-known.pcap" in
+        let src = (Ipaddr.V4.of_string_exn "10.0.0.1", 5353) in
+        let dst = (Ipaddr.V4.of_string_exn "224.0.0.251", 5353) in
+        (* Given that the query already contains known answers for
+           all relevant records, there should be no reply at all. *)
+        let thread = process ~src ~dst raw in
+        Lwt_main.run thread;
+      );
+
   ]
 
 
