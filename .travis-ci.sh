@@ -18,7 +18,7 @@ opam --git-version
 echo @@@ Init OPAM
 opam init git://github.com/ocaml/opam-repository >/dev/null 2>&1
 echo @@@ Get branch of dns
-git clone -b mdns git@github.com:infidel/ocaml-dns.git
+git clone -b mdns https://github.com/infidel/ocaml-dns.git
 opam pin add dns ocaml-dns
 echo @@@ Pin and install mDNS
 opam pin add mdns .
