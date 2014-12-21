@@ -22,23 +22,24 @@ git clone -b mdns https://github.com/infidel/ocaml-dns.git
 opam pin add dns ocaml-dns
 echo @@@ Pin and install mDNS
 opam pin add mdns .
-opam install -t mdns
+opam install mdns
 
 echo @@@ depopt: tcpip
 opam install tcpip
 #export OPAMVERBOSE=1
-opam install async
+# TODO: opam install async
 
 echo @@@ Non-OPAM build and test
+opam install pcap-format
 eval `opam config env`
 make clean
 make
 make test
 
-#opam install mirage
-#cd lib_test/mirage
-#mirage configure --unix
-#make
+opam install mirage
+cd lib_test/mirage
+mirage configure --unix
+make
 
 
 # From https://github.com/sagotch/ocveralls/blob/master/.travis-ci.sh
