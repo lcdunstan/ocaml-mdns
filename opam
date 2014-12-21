@@ -1,10 +1,9 @@
-opam-version: "1"
+opam-version: "1.2"
 package: "mdns"
-maintainer: "LukeDunstan81@gmail.com"
+maintainer: "Luke Dunstan <LukeDunstan81@gmail.com>"
 authors: [
-  "Luke Dunstan"
+  "Luke Dunstan <LukeDunstan81@gmail.com>"
 ]
-homepage: "https://github.com/infidel/ocaml-mdns"
 license: "ISC"
 build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--%{base-unix:enable}%-lwt" "--%{mirage-types:enable}%-mirage"]
@@ -21,9 +20,11 @@ depends: [
   "ipaddr" {>= "2.2.0"}
   "base64"
   "dns" {>= 0.11.0}
+  "ounit"
+  "pcap-format" {test}
 ]
 depopts: [
-  ("mirage-types" & "tcpip")
+  "tcpip"
   "async"
 ]
 conflicts: [
