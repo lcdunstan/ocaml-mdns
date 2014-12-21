@@ -22,7 +22,7 @@ git clone -b mdns https://github.com/infidel/ocaml-dns.git
 opam pin add dns ocaml-dns
 echo @@@ Pin and install mDNS
 opam pin add mdns .
-opam install mdns
+opam install -t mdns
 
 echo @@@ depopt: tcpip
 opam install tcpip
