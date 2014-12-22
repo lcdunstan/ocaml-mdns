@@ -40,6 +40,7 @@ opam install mirage
 cd lib_test/mirage
 mirage configure --unix
 make
+cd ../..
 
 
 # From https://github.com/sagotch/ocveralls/blob/master/.travis-ci.sh
@@ -71,4 +72,5 @@ echo @@@ upload coverage to coveralls.io using ocveralls
 chmod +x ./ocveralls.sh
 cd _build
 ../ocveralls.sh coverage*.out
+cd ..
 
