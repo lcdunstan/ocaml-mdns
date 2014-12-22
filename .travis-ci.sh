@@ -56,8 +56,10 @@ sudo make install # ./configure set PATH_OCAML_PREFIX=/usr instead of
                   # using .opam directory, so we need sudo
 cd ..
 
+echo @@@ Installing OASIS
+opam install oasis
 echo @@@ hacking mdns _oasis file for bisect
-sed -e 's/^\(\s\+BuildDepends:\s.*\)$/\1, bisect/' _oasis
+sed -i -e 's/^\(\s\+BuildDepends:\s.*\)$/\1, bisect/' _oasis
 oasis setup
 
 # run test, then send result to coveralls
