@@ -65,7 +65,6 @@ oasis setup
 # run test, then send result to coveralls
 echo @@@ code coverage during test
 make clean
-#export COVERAGE=--enable-coverage
 make
 make test
 
@@ -73,6 +72,6 @@ make test
 echo @@@ upload coverage to coveralls.io using ocveralls
 chmod +x ./ocveralls.sh
 cd _build
-../ocveralls.sh coverage*.out
+../ocveralls.sh ../lib_test/ounit/bisect*.out
 cd ..
 
