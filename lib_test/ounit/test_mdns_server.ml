@@ -309,13 +309,14 @@ let tests =
 
     "announce" >:: (fun test_ctxt ->
         let txlist = ref [] in
+        let sleepl = ref [] in
         let module MockTransport = struct
           let alloc () = allocfn ()
           let write addr buf =
             txlist := (addr, buf) :: !txlist;
             Lwt.return ()
           let sleep t =
-            assert_equal ~msg:"sleep should be 1 second" ~printer:string_of_float 1.0 t;
+            sleepl := t :: !sleepl;
             Lwt.return ()
         end in
         let module Server = Mdns_server.Make(MockTransport) in
@@ -325,10 +326,11 @@ let tests =
 
         (* Verify the first transmitted packet *)
         assert_equal 2 (List.length !txlist);
-        let (txaddr, txbuf) = List.hd !txlist in
+        let (txaddr, txbuf) = List.nth !txlist 1 in
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
+        assert_equal ~msg:"first sleep should be 1 second" ~printer:string_of_float 1.0 (List.nth !sleepl 1);
         let packet = parse txbuf in
 
         assert_equal ~msg:"id" 0 packet.id;
@@ -369,9 +371,10 @@ let tests =
           ) expected_rrs sorted;
 
         (* The second packet should be exactly the same *)
-        let (txaddr2, txbuf2) = List.nth !txlist 1 in
+        let (txaddr2, txbuf2) = List.nth !txlist 0 in
         assert_equal ~msg:"txaddr2" txaddr txaddr2;
         assert_equal ~msg:"txbuf2" txbuf txbuf2;
+        assert_equal ~msg:"second sleep should be 2 seconds" ~printer:string_of_float 2.0 (List.nth !sleepl 0);
       );
   ]
 

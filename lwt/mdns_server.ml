@@ -249,9 +249,12 @@ module Make (Transport : TRANSPORT) = struct
       | None -> return ()
       | Some obuf ->
         (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
+        let sleept = ref 1.0 in
         for_lwt i = 1 to repeat do
           Transport.write (dest_host,dest_port) obuf >>= fun () ->
-          Transport.sleep 1.0
+          Transport.sleep !sleept >>= fun() ->
+          sleept := !sleept *. 2.0;
+          return ()
         done
 
   let get_answer t dp =
