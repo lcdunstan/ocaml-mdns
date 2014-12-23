@@ -42,6 +42,9 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         >>= fun () ->
         Server.process server ~src:(src,src_port) ~dst:(dst,listening_port) (Cstruct.to_bigarray buf)
     );
-    S.listen s
+    join [
+      Server.announce ~repeat:3 server;
+      S.listen s;
+    ]
 end
 

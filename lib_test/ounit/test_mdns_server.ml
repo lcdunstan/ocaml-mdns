@@ -307,6 +307,72 @@ let tests =
         Lwt_main.run thread;
       );
 
+    "announce" >:: (fun test_ctxt ->
+        let txlist = ref [] in
+        let module MockTransport = struct
+          let alloc () = allocfn ()
+          let write addr buf =
+            txlist := (addr, buf) :: !txlist;
+            Lwt.return ()
+          let sleep t =
+            assert_equal ~msg:"sleep should be 1 second" ~printer:string_of_float 1.0 t;
+            Lwt.return ()
+        end in
+        let module Server = Mdns_server.Make(MockTransport) in
+        let zonebuf = load_file "test_mdns.zone" in
+        let server = Server.of_zonebufs [zonebuf] in
+        Lwt_main.run (Server.announce server ~repeat:2);
+
+        (* Verify the first transmitted packet *)
+        assert_equal 2 (List.length !txlist);
+        let (txaddr, txbuf) = List.hd !txlist in
+        let (txip, txport) = txaddr in
+        assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
+        assert_equal ~printer:string_of_int 5353 txport;
+        let packet = parse txbuf in
+
+        assert_equal ~msg:"id" 0 packet.id;
+        assert_equal ~msg:"qr" Response packet.detail.qr;
+        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
+        assert_equal ~msg:"aa" true packet.detail.aa;
+        assert_equal ~msg:"tc" false packet.detail.tc;
+        assert_equal ~msg:"rd" false packet.detail.rd;
+        assert_equal ~msg:"ra" false packet.detail.ra;
+        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
+        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
+        assert_equal ~msg:"#an" ~printer:string_of_int 17 (List.length packet.answers);
+        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
+        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+
+        let sorted = packet.answers |> List.map rr_to_string |> List.sort String.compare in
+        let expected_rrs = [
+          "_foobar._tcp.local <IN|120> [SRV (0,0,9, fake1.local)]";
+          "_snake._tcp.local <IN|120> [PTR (dugite._snake._tcp.local)]";
+          "_snake._tcp.local <IN|120> [PTR (king brown._snake._tcp.local)]";
+          "_snake._tcp.local <IN|120> [PTR (tiger._snake._tcp.local)]";
+          "dugite._snake._tcp.local <IN|120> [SRV (0,0,33333, fake2.local)]";
+          "dugite._snake._tcp.local <IN|120> [TXT (txtvers=1species=Pseudonaja affinis)]";
+          "fake1.local <IN|4500> [A (127.0.0.94)]";
+          "fake2.local <IN|4500> [A (127.0.0.95)]";
+          "fake3.local <IN|4500> [A (127.0.0.96)]";
+          "fake4.local <IN|4500> [CNAME (fake1.local)]";
+          "king brown._snake._tcp.local <IN|120> [SRV (0,0,33333, fake3.local)]";
+          "king brown._snake._tcp.local <IN|120> [TXT (txtvers=1species=Pseudechis australis)]";
+          "laptop1.local <IN|120> [A (192.168.2.101)]";
+          "mirage1.local <IN|120> [A (10.0.0.2)]";
+          "router1.local <IN|120> [A (192.168.2.1)]";
+          "tiger._snake._tcp.local <IN|120> [SRV (0,0,33333, fake1.local)]";
+          "tiger._snake._tcp.local <IN|120> [TXT (txtvers=1species=Notechis scutatus)]";
+        ] in
+        List.iter2 (fun expected actual ->
+            assert_equal ~msg:"rr" ~printer:(fun s -> s) expected actual
+          ) expected_rrs sorted;
+
+        (* The second packet should be exactly the same *)
+        let (txaddr2, txbuf2) = List.nth !txlist 1 in
+        assert_equal ~msg:"txaddr2" txaddr txaddr2;
+        assert_equal ~msg:"txbuf2" txbuf txbuf2;
+      );
   ]
 
 

@@ -201,7 +201,58 @@ module Make (Transport : TRANSPORT) = struct
 
   let of_zonebuf zonebuf = of_zonebufs [zonebuf]
 
-  let announce t = return ()
+  let announce t ~repeat =
+    MProf.Trace.label "announce";
+    let questions = ref [] in
+    let build_questions node =
+      let q = DP.({
+        q_name = node.DR.owner.H.node;
+        q_type = Q_ANY_TYP;
+        q_class = Q_IN;
+        q_unicast = QM;
+      }) in
+      questions := q :: !questions
+    in
+    let dedup_answer answer =
+      (* TODO: Dns.Query shouldn't generate duplicate RRs *)
+      let rr_eq rr1 rr2 =
+        rr1.DP.name = rr2.DP.name &&
+        DP.compare_rdata rr1.DP.rdata rr2.DP.rdata = 0
+      in
+      let rec dedup l =
+        match l with
+        | [] -> l
+        | hd::tl -> if List.exists (rr_eq hd) tl
+          then tl
+          else hd :: dedup tl
+      in
+      { answer with DQ.answer = dedup answer.DQ.answer; DQ.additional = [] }
+    in
+    Dns.Trie.iter build_questions t.dnstrie;
+    let answer = DQ.answer_multiple ~dnssec:false ~mdns:true !questions t.dnstrie in
+    let answer = dedup_answer answer in
+    let dest_host = multicast_ip in
+    let dest_port = 5353 in
+    (* TODO: refactor Dns.Query to avoid the need for this fake query *)
+    let fake_detail = DP.({ qr=Query; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError}) in
+    let fake_query = DP.({
+        id=0;
+        detail=fake_detail;
+        questions=[]; answers=[]; authorities=[]; additionals=[];
+    }) in
+    let response = DQ.response_of_answer ~mdns:true fake_query answer in
+    if response.DP.answers = [] then
+      return ()
+    else
+      let obuf = Transport.alloc () in
+      match DS.marshal obuf fake_query response with
+      | None -> return ()
+      | Some obuf ->
+        (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
+        for_lwt i = 1 to repeat do
+          Transport.write (dest_host,dest_port) obuf >>= fun () ->
+          Transport.sleep 1.0
+        done
 
   let get_answer t dp =
     let filter name rrset =
