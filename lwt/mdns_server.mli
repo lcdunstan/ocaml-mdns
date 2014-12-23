@@ -17,23 +17,21 @@
 
 type ip_endpoint = Ipaddr.V4.t * int
 
-type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
-
 type unique = Unique | Shared
 
-type commfn = {
-  allocfn : unit -> Dns.Buf.t;
-  txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
-  sleepfn : float -> unit Lwt.t;
-}
+module type TRANSPORT = sig
+  val alloc : unit -> Dns.Buf.t
+  val write : ip_endpoint -> Dns.Buf.t -> unit Lwt.t
+  val sleep : float -> unit Lwt.t
+end
 
-val process_of_zonebufs :
-  string list ->
-  commfn ->
-  process
+module Make : functor (Transport : TRANSPORT) -> sig
+  type t
 
-val process_of_zonebuf :
-  string ->
-  commfn ->
-  process
+  val of_zonebufs : string list -> t
+  val of_zonebuf : string -> t
+
+  val announce : t -> unit Lwt.t
+  val process : t -> src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
+end
 

@@ -27,19 +27,20 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
     in
     let open Mdns_server in
     let udp = S.udpv4 s in
-    let allocfn () = Io_page.get 1 in
-    let txfn (dest_ip,dest_port) txbuf =
-      U.write ~source_port:listening_port ~dest_ip:dest_ip ~dest_port udp (Cstruct.of_bigarray txbuf)
+    let module Server = Make(struct
+        let alloc () = Io_page.get 1
+        let write (dest_ip,dest_port) txbuf =
+          U.write ~source_port:listening_port ~dest_ip:dest_ip ~dest_port udp (Cstruct.of_bigarray txbuf)
+        let sleep t = Lwt_unix.sleep t
+      end)
     in
-    let sleepfn = Lwt_unix.sleep in
-    let commfn = { allocfn; txfn; sleepfn } in
-    let process = process_of_zonebuf zonebuf commfn in
+    let server = Server.of_zonebuf zonebuf in
     S.listen_udpv4 s listening_port (
       fun ~src ~dst ~src_port buf ->
         MProf.Trace.label "got udp";
         C.log_s c (sprintf "got udp from %s:%d" (Ipaddr.V4.to_string src) src_port)
         >>= fun () ->
-        process ~src:(src,src_port) ~dst:(dst,listening_port) (Cstruct.to_bigarray buf)
+        Server.process server ~src:(src,src_port) ~dst:(dst,listening_port) (Cstruct.to_bigarray buf)
     );
     S.listen s
 end

@@ -26,15 +26,13 @@ module H = Dns.Hashcons
 
 type ip_endpoint = Ipaddr.V4.t * int
 
-type process = src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
-
 type unique = Unique | Shared
 
-type commfn = {
-  allocfn : unit -> Dns.Buf.t;
-  txfn    : ip_endpoint -> Dns.Buf.t -> unit Lwt.t;
-  sleepfn : float -> unit Lwt.t;
-}
+module type TRANSPORT = sig
+  val alloc : unit -> Dns.Buf.t
+  val write : ip_endpoint -> Dns.Buf.t -> unit Lwt.t
+  val sleep : float -> unit Lwt.t
+end
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
 
@@ -189,11 +187,23 @@ let rec filter_known_list rr knownl =
       match frr with DR.Unknown _ -> frr | _ -> filter_known_list frr tl
     end
 
-let process_of_zonebufs zonebufs commfn =
-  let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
-    (Dns.Loader.new_db ()) zonebufs in
-  let dnstrie = db.Dns.Loader.trie in
-  let get_answer dp =
+module Make (Transport : TRANSPORT) = struct
+  type t = {
+    db : Dns.Loader.db;
+    dnstrie : Dns.Trie.dnstrie;
+  }
+
+  let of_zonebufs zonebufs =
+    let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
+        (Dns.Loader.new_db ()) zonebufs in
+    let dnstrie = db.Dns.Loader.trie in
+    { db; dnstrie; }
+
+  let of_zonebuf zonebuf = of_zonebufs [zonebuf]
+
+  let announce t = return ()
+
+  let get_answer t dp =
     let filter name rrset =
       (* RFC 6762 section 7.1 - Known Answer Suppression *)
       (* First match on owner name and check TTL *)
@@ -209,9 +219,9 @@ let process_of_zonebufs zonebufs commfn =
       }
     in
     (* DNSSEC disabled for testing *)
-    DQ.answer_multiple ~dnssec:false ~mdns:true ~filter dp.DP.questions dnstrie
-  in
-  let callback ~src ~dst ibuf =
+    DQ.answer_multiple ~dnssec:false ~mdns:true ~filter dp.DP.questions t.dnstrie
+
+  let process t ~src ~dst ibuf =
     MProf.Trace.label "mDNS process";
     let open DP in
     match DS.parse ibuf with
@@ -224,7 +234,7 @@ let process_of_zonebufs zonebufs commfn =
       return ()
     | Some dp when dp.detail.qr = Query ->
       begin
-        match Dns.Protocol.contain_exc "answer" (fun () -> get_answer dp) with
+        match Dns.Protocol.contain_exc "answer" (fun () -> get_answer t dp) with
         | None -> return ()
         | Some answer when answer.DQ.answer = [] -> return ()
         | Some answer ->
@@ -235,19 +245,19 @@ let process_of_zonebufs zonebufs commfn =
           (* TODO: zero delay for records that have been verified as unique *)
           (* Delay response for 20-120 ms *)
           let delay = if legacy then 0.0 else 0.02 +. Random.float 0.1 in
-          commfn.sleepfn delay >>= fun () ->
+          Transport.sleep delay >>= fun () ->
           MProf.Trace.label "post delay";
           (* NOTE: echoing of questions is still required for legacy mode *)
           let response = DQ.response_of_answer ~mdns:(not legacy) dp answer in
           if response.answers = [] then
             return ()
           else
-            let obuf = commfn.allocfn () in
+            let obuf = Transport.alloc () in
             match DS.marshal obuf dp response with
             | None -> return ()
             | Some obuf ->
               (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
-              commfn.txfn (dest_host,src_port) obuf
+              Transport.write (dest_host,src_port) obuf
       end
 
     | Some dp ->
@@ -255,10 +265,5 @@ let process_of_zonebufs zonebufs commfn =
       (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
       printf "Response ignored.\n%!";
       return ()
-  in
-  callback
-
-
-let process_of_zonebuf zonebuf commfn =
-  process_of_zonebufs [zonebuf] commfn
+end
 
