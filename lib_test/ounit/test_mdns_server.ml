@@ -131,7 +131,7 @@ let tests =
         let a = List.hd packet.answers in
         assert_equal ~msg:"name" "mirage1.local" (domain_name_to_string a.name);
         assert_equal ~msg:"cls" RR_IN a.cls;
-        (* TODO: assert_equal ~msg:"flush" true a.flush; *)
+        assert_equal ~msg:"flush" false a.flush;
         assert_equal ~msg:"ttl" (Int32.of_int 120) a.ttl;
         match a.rdata with
         | A addr -> assert_equal ~msg:"A" "10.0.0.2" (Ipaddr.V4.to_string addr)
@@ -307,6 +307,164 @@ let tests =
         Lwt_main.run thread;
       );
 
+    "unique" >:: (fun test_ctxt ->
+        let txlist = ref [] in
+        let sleepl = ref [] in
+        let module MockTransport = struct
+          let alloc () = allocfn ()
+          let write addr buf =
+            txlist := (addr, buf) :: !txlist;
+            Lwt.return ()
+          let sleep t =
+            sleepl := t :: !sleepl;
+            Lwt.return ()
+        end in
+        let module Server = Mdns_server.Make(MockTransport) in
+        let zonebuf = load_file "test_mdns.zone" in
+        let server = Server.of_zonebufs [zonebuf] in
+
+        let module DR = Dns.RR in
+        let module H = Dns.Hashcons in
+        let name = string_to_domain_name "mirage1.local" in
+        begin
+          let key = canon2key name in
+          match Dns.Trie.simple_lookup key (Server.trie server) with
+          | None -> assert_failure "mirage1.local not found";
+          | Some node ->
+            assert_equal ~msg:"owner" ~printer:(fun s -> s) "mirage1.local" (domain_name_to_string node.DR.owner.H.node);
+        end;
+
+        (* Add a unique hostname *)
+        let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
+        let unique_name_str = "unique.local" in
+        let name = string_to_domain_name unique_name_str in
+        Server.add_unique_hostname server unique_name_str unique_ip;
+        begin
+          let key = canon2key name in
+          match Dns.Trie.simple_lookup key (Server.trie server) with
+          | None -> assert_failure "unique.local not found";
+          | Some node ->
+            assert_equal ~msg:"owner" ~printer:(fun s -> s) "unique.local" (domain_name_to_string node.DR.owner.H.node);
+        end
+      );
+
+    "probe" >:: (fun test_ctxt ->
+        let txlist = ref [] in
+        let cond = Lwt_condition.create () in
+        let sleepl = ref [] in
+        let module MockTransport = struct
+          let alloc () = allocfn ()
+          let write addr buf =
+            txlist := (addr, buf) :: !txlist;
+            Lwt.return ()
+          let sleep t =
+            sleepl := t :: !sleepl;
+            Lwt_condition.wait cond
+        end in
+        let module Server = Mdns_server.Make(MockTransport) in
+        let zonebuf = load_file "test_mdns.zone" in
+        let server = Server.of_zonebufs [zonebuf] in
+
+        (* Add a unique hostname *)
+        let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
+        let unique_name = "unique.local" in
+        Server.add_unique_hostname server unique_name unique_ip;
+
+        (* Create the probe thread *)
+        let probe_thread = Server.probe server in
+        (* Wait for the first sleep *)
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 0 do
+          Lwt_engine.iter false
+        done;
+        assert_equal ~msg:"#sleepl first" ~printer:string_of_int 1 (List.length !sleepl);
+        assert_equal ~msg:"#txlist first" ~printer:string_of_int 0 (List.length !txlist);
+        (* Verify the sleep duration *)
+        assert_range 0.0 0.25 (List.hd !sleepl);
+
+        (* Wait for the first probe to be sent and the second sleep *)
+        Lwt_condition.signal cond ();
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
+          Lwt_engine.iter true
+        done;
+        assert_equal ~msg:"#sleepl second" ~printer:string_of_int 2 (List.length !sleepl);
+        assert_equal ~msg:"#txlist second" ~printer:string_of_int 1 (List.length !txlist);
+        (* Verify the first transmitted probe *)
+        let (txaddr, txbuf) = List.hd !txlist in
+        let (txip, txport) = txaddr in
+        assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
+        assert_equal ~printer:string_of_int 5353 txport;
+        let packet = parse txbuf in
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:> <ad:>" in
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        (* Verify the sleep duration *)
+        assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
+
+        (* Wait for the second probe to be sent and the third sleep *)
+        Lwt_condition.signal cond ();
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 2 do
+          Lwt_engine.iter false
+        done;
+        assert_equal ~msg:"#sleepl third" ~printer:string_of_int 3 (List.length !sleepl);
+        assert_equal ~msg:"#txlist third" ~printer:string_of_int 2 (List.length !txlist);
+        (* The second packet should be exactly the same *)
+        let (txaddr2, txbuf2) = List.hd !txlist in
+        assert_equal ~msg:"txaddr2" txaddr txaddr2;
+        assert_equal ~msg:"txbuf2" txbuf txbuf2;
+        (* Verify the sleep duration *)
+        assert_equal ~msg:"third sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
+
+        (* Wait for the third probe to be sent and the fourth sleep *)
+        Lwt_condition.signal cond ();
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 3 do
+          Lwt_engine.iter true
+        done;
+        assert_equal ~msg:"#sleepl fourth" ~printer:string_of_int 4 (List.length !sleepl);
+        assert_equal ~msg:"#txlist fourth" ~printer:string_of_int 3 (List.length !txlist);
+        (* The third packet should be exactly the same *)
+        let (txaddr3, txbuf3) = List.hd !txlist in
+        assert_equal ~msg:"txaddr3" txaddr txaddr3;
+        assert_equal ~msg:"txbuf3" txbuf txbuf3;
+        (* Verify the sleep duration *)
+        assert_equal ~msg:"fourth sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
+        (* Make sure the probe thread has finished *)
+        Lwt_condition.signal cond ();
+        while Lwt.is_sleeping probe_thread do
+          Lwt_condition.signal cond ();
+          Lwt_engine.iter false
+        done;
+
+        (* Announcement stage *)
+        Lwt_main.run (Server.announce server ~repeat:1);
+        assert_equal ~msg:"#sleepl announce" ~printer:string_of_int 4 (List.length !sleepl);
+        assert_equal ~msg:"#txlist announce" ~printer:string_of_int 4 (List.length !txlist);
+        let (txaddr4, txbuf) = List.hd !txlist in
+        assert_equal ~msg:"txaddr4" txaddr txaddr4;
+        let packet = parse txbuf in
+
+        assert_equal ~msg:"id" 0 packet.id;
+        assert_equal ~msg:"qr" Response packet.detail.qr;
+        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
+        assert_equal ~msg:"aa" true packet.detail.aa;
+        assert_equal ~msg:"tc" false packet.detail.tc;
+        assert_equal ~msg:"rd" false packet.detail.rd;
+        assert_equal ~msg:"ra" false packet.detail.ra;
+        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
+        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
+        assert_equal ~msg:"#an" ~printer:string_of_int 18 (List.length packet.answers);
+        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
+        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+
+        (* Verify that the cache flush bit is set on the unique record *)
+        let rr = List.find (fun rr -> (domain_name_to_string rr.name) = "unique.local") packet.answers in
+        assert_equal ~msg:"unique name" ~printer:(fun s -> s) "unique.local" (domain_name_to_string rr.name);
+        assert_equal ~msg:"unique cls" RR_IN rr.cls;
+        assert_equal ~msg:"unique flush" true rr.flush;
+        assert_equal ~msg:"unique ttl" (Int32.of_int 120) rr.ttl;
+        match rr.rdata with
+        | A addr -> assert_equal ~msg:"unique A" "1.2.3.4" (Ipaddr.V4.to_string addr)
+        | _ -> assert_failure "unique RR type";
+      );
+
     "announce" >:: (fun test_ctxt ->
         let txlist = ref [] in
         let sleepl = ref [] in
@@ -322,11 +480,17 @@ let tests =
         let module Server = Mdns_server.Make(MockTransport) in
         let zonebuf = load_file "test_mdns.zone" in
         let server = Server.of_zonebufs [zonebuf] in
-        Lwt_main.run (Server.announce server ~repeat:2);
+        (* Probe should do nothing because there are no unique records *)
+        Lwt_main.run (Server.probe server);
+        assert_equal ~msg:"probe shouldn't send" 0 (List.length !txlist);
+        assert_equal ~msg:"probe shouldn't sleep" 0 (List.length !sleepl);
+        (* Announce *)
+        Lwt_main.run (Server.announce server ~repeat:3);
 
         (* Verify the first transmitted packet *)
-        assert_equal 2 (List.length !txlist);
-        let (txaddr, txbuf) = List.nth !txlist 1 in
+        assert_equal 3 (List.length !txlist);
+        assert_equal 2 (List.length !sleepl);
+        let (txaddr, txbuf) = List.nth !txlist 2 in
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
@@ -371,10 +535,15 @@ let tests =
           ) expected_rrs sorted;
 
         (* The second packet should be exactly the same *)
-        let (txaddr2, txbuf2) = List.nth !txlist 0 in
+        let (txaddr2, txbuf2) = List.nth !txlist 1 in
         assert_equal ~msg:"txaddr2" txaddr txaddr2;
         assert_equal ~msg:"txbuf2" txbuf txbuf2;
         assert_equal ~msg:"second sleep should be 2 seconds" ~printer:string_of_float 2.0 (List.nth !sleepl 0);
+
+        (* The third packet should be exactly the same *)
+        let (txaddr3, txbuf3) = List.nth !txlist 0 in
+        assert_equal ~msg:"txaddr3" txaddr txaddr3;
+        assert_equal ~msg:"txbuf3" txbuf txbuf3;
       );
   ]
 
