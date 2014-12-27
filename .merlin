@@ -3,7 +3,7 @@ EXT lwt
 PKG lwt
 PKG lwt.syntax
 PKG lwt.unix
-PKG cstruct mirage-net-unix mirage dns
+PKG cstruct mirage-net-unix mirage mirage-types mirage-types.lwt dns
 PKG pcap-format oUnit
 
 S lib
