@@ -35,6 +35,7 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
       end)
     in
     let server = Server.of_zonebuf zonebuf in
+    Server.add_unique_hostname server "mirage-mdns.local" (Ipaddr.V4.of_string_exn "10.0.0.2");
     S.listen_udpv4 s listening_port (
       fun ~src ~dst ~src_port buf ->
         MProf.Trace.label "got udp";
@@ -43,7 +44,7 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         Server.process server ~src:(src,src_port) ~dst:(dst,listening_port) (Cstruct.to_bigarray buf)
     );
     join [
-      Server.announce ~repeat:3 server;
+      (Server.probe server >>= fun () -> Server.announce server ~repeat:3)
       S.listen s;
     ]
 end
