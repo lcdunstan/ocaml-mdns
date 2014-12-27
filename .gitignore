@@ -11,3 +11,13 @@ setup.log
 *.cmo
 *.cmx
 *.o
+lib_test/mirage/Makefile
+lib_test/mirage/log
+lib_test/mirage/main.ml
+lib_test/mirage/mir-mdns-resp-test
+lib_test/mirage/static1.ml
+lib_test/mirage/static1.mli
+*_libvirt.xml
+*.xe
+*.xl
+*.ctf
