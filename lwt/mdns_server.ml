@@ -198,7 +198,8 @@ module Make (Transport : TRANSPORT) = struct
   }
 
   type unique_state = {
-    mutable probe_sent : bool;
+    rdata : DP.rdata;
+    mutable probing : bool;
     mutable response_seen_time : timestamp;
     mutable confirmed : bool;
   }
@@ -226,7 +227,10 @@ module Make (Transport : TRANSPORT) = struct
     Dns.Loader.add_a_rr ip 120l name t.db;
     (* Add an entry to our own list of unique records *)
     let key = {name; rrtype=DP.RR_A} in
-    let value = { probe_sent=false; response_seen_time=0; confirmed=false } in
+    let value = {
+      rdata=DP.A ip;
+      probing=false; response_seen_time=0; confirmed=false
+    } in
     t.unique <- (key, value) :: t.unique
 
   let unique_of_key t name rrtype =
@@ -250,6 +254,7 @@ module Make (Transport : TRANSPORT) = struct
 
   let prepare_probe t =
     let questions = ref [] in
+    let authorities = ref [] in
     let probe_node node =
       let probe_rrset rrset =
         match unique_of_rrset t node.DR.owner.H.node rrset.DR.rdata with
@@ -258,7 +263,10 @@ module Make (Transport : TRANSPORT) = struct
             false  (* Only probe if not already confirmed *)
           else
             begin
-              unique.probe_sent <- true;
+              unique.probing <- true;
+              (* RFC 6762 section 8.2 - populate the Authority section *)
+              let auth = DP.({name=node.DR.owner.H.node; cls=DP.RR_IN; flush=true; ttl=120l; rdata=unique.rdata}) in
+              authorities := auth :: !authorities;
               true
             end
         | None -> false
@@ -280,7 +288,7 @@ module Make (Transport : TRANSPORT) = struct
       None
     else
       let detail = DP.({ qr=Query; opcode=Standard; aa=false; tc=false; rd=false; ra=false; rcode=NoError}) in
-      let query = DP.({ id=0; detail; questions= !questions; answers=[]; authorities=[]; additionals=[]; }) in
+      let query = DP.({ id=0; detail; questions= !questions; answers=[]; authorities= !authorities; additionals=[]; }) in
       let obuf = DP.marshal (Transport.alloc ()) query in
       Some obuf
 
@@ -307,8 +315,10 @@ module Make (Transport : TRANSPORT) = struct
       Transport.sleep 0.25 >>= fun () ->
       (* Now confirmed unique *)
       List.iter (fun (key,unique) ->
-          if unique.probe_sent then
+          if unique.probing then begin
+            unique.probing <- false;
             unique.confirmed <- true
+          end
         ) t.unique;
       return ()
 
@@ -325,6 +335,8 @@ module Make (Transport : TRANSPORT) = struct
       questions := q :: !questions
     in
     let dedup_answer answer =
+      (* Delete duplicate RRs from the response *)
+      (* FIXME: O(N*N) *)
       (* TODO: Dns.Query shouldn't generate duplicate RRs *)
       let rr_eq rr1 rr2 =
         rr1.DP.name = rr2.DP.name &&
@@ -389,6 +401,18 @@ module Make (Transport : TRANSPORT) = struct
     DQ.answer_multiple ~dnssec:false ~mdns:true ~filter ~flush:(is_confirmed_unique t) dp.DP.questions t.dnstrie
 
   let process_query t src dst dp =
+    let get_delay legacy response =
+      if legacy then
+        (* Zero delay for legacy mode *)
+        return ()
+      else if List.exists (fun a -> a.DP.flush) response.DP.answers then
+        (* Zero delay for records that have been verified as unique *)
+        (* TODO: send separate unique and non-unique responses if applicable *)
+        return ()
+      else
+        (* Delay response for 20-120 ms *)
+        Transport.sleep (0.02 +. Random.float 0.1)
+    in
     match Dns.Protocol.contain_exc "answer" (fun () -> get_answer t dp) with
     | None -> return ()
     | Some answer when answer.DQ.answer = [] -> return ()
@@ -398,25 +422,26 @@ module Make (Transport : TRANSPORT) = struct
       let reply_host = if legacy then src_host else multicast_ip in
       let reply_port = src_port in
       (* RFC 6762 section 18.5 - TODO: check tc bit *)
-      (* TODO: zero delay for records that have been verified as unique *)
-      (* Delay response for 20-120 ms *)
-      let delay = if legacy then 0.0 else 0.02 +. Random.float 0.1 in
-      Transport.sleep delay >>= fun () ->
       MProf.Trace.label "post delay";
       (* NOTE: echoing of questions is still required for legacy mode *)
       let response = DQ.response_of_answer ~mdns:(not legacy) dp answer in
       if response.DP.answers = [] then
         return ()
       else
-        (* TODO: limit the response packet size *)
-        let obuf = Transport.alloc () in
-        match DS.marshal obuf dp response with
-        | None -> return ()
-        | Some obuf ->
-          (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
-          Transport.write (reply_host,reply_port) obuf
+        begin
+          (* Possible delay before responding *)
+          get_delay legacy response >>= fun () ->
+          (* TODO: limit the response packet size *)
+          let obuf = Transport.alloc () in
+          match DS.marshal obuf dp response with
+          | None -> return ()
+          | Some obuf ->
+            (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
+            Transport.write (reply_host,reply_port) obuf
+        end
 
   let process_response t dp =
+    (* Check for conflicts with our unique records *)
     (* TODO: process responses *)
     (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
     printf "Response ignored.\n%!";

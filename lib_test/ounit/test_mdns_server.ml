@@ -394,7 +394,7 @@ let tests =
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
         let packet = parse txbuf in
-        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:> <ad:>" in
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:unique.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
         assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
@@ -454,7 +454,7 @@ let tests =
         assert_equal ~msg:"#au" 0 (List.length packet.authorities);
         assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
 
-        (* Verify that the cache flush bit is set on the unique record *)
+        (* Verify that the cache flush bit is set on the announced unique record *)
         let rr = List.find (fun rr -> (domain_name_to_string rr.name) = "unique.local") packet.answers in
         assert_equal ~msg:"unique name" ~printer:(fun s -> s) "unique.local" (domain_name_to_string rr.name);
         assert_equal ~msg:"unique cls" RR_IN rr.cls;
