@@ -85,6 +85,20 @@ let allocfn () = Bigarray.Array1.create Bigarray.char Bigarray.c_layout 4096
 open Dns.Packet
 open Dns.Name
 
+let assert_packet ?(prefix="") ?(id=0) packet expected_detail nq nan nau nad =
+  assert_equal ~msg:(prefix ^ "id") ~printer:string_of_int id packet.id;
+  assert_equal ~msg:(prefix ^ "qr") expected_detail.qr packet.detail.qr;
+  assert_equal ~msg:(prefix ^ "opcode") ~printer:opcode_to_string expected_detail.opcode packet.detail.opcode;
+  assert_equal ~msg:(prefix ^ "aa") ~printer:string_of_bool expected_detail.aa packet.detail.aa;
+  assert_equal ~msg:(prefix ^ "tc") ~printer:string_of_bool expected_detail.tc packet.detail.tc;
+  assert_equal ~msg:(prefix ^ "rd") ~printer:string_of_bool expected_detail.rd packet.detail.rd;
+  assert_equal ~msg:(prefix ^ "ra") ~printer:string_of_bool expected_detail.ra packet.detail.ra;
+  assert_equal ~msg:(prefix ^ "rcode") ~printer:rcode_to_string expected_detail.rcode packet.detail.rcode;
+  assert_equal ~msg:(prefix ^ "#qu") nq (List.length packet.questions);
+  assert_equal ~msg:(prefix ^ "#an") nan (List.length packet.answers);
+  assert_equal ~msg:(prefix ^ "#au") nau (List.length packet.authorities);
+  assert_equal ~msg:(prefix ^ "#ad") nad (List.length packet.additionals)
+
 let tests =
   "Mdns_server" >:::
   [
@@ -115,18 +129,7 @@ let tests =
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
         let packet = parse txbuf in
-        assert_equal ~msg:"id" 0 packet.id;
-        assert_equal ~msg:"qr" Response packet.detail.qr;
-        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
-        assert_equal ~msg:"aa" true packet.detail.aa;
-        assert_equal ~msg:"tc" false packet.detail.tc;
-        assert_equal ~msg:"rd" false packet.detail.rd;
-        assert_equal ~msg:"ra" false packet.detail.ra;
-        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
-        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
-        assert_equal ~msg:"#an" 1 (List.length packet.answers);
-        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
-        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+        assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 1 0 0;
 
         let a = List.hd packet.answers in
         assert_equal ~msg:"name" "mirage1.local" (domain_name_to_string a.name);
@@ -166,18 +169,7 @@ let tests =
         assert_equal ~printer:(fun s -> s) "10.0.0.1" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 12345 txport;
         let packet = parse txbuf in
-        assert_equal ~msg:"id" 0x1df9 packet.id;
-        assert_equal ~msg:"qr" Response packet.detail.qr;
-        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
-        assert_equal ~msg:"aa" true packet.detail.aa;
-        assert_equal ~msg:"tc" false packet.detail.tc;
-        assert_equal ~msg:"rd" true packet.detail.rd;
-        assert_equal ~msg:"ra" false packet.detail.ra;
-        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
-        assert_equal ~msg:"#qu" 1 (List.length packet.questions);
-        assert_equal ~msg:"#an" 1 (List.length packet.answers);
-        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
-        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+        assert_packet ~id:0x1df9 packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=true; ra=false; rcode=NoError} 1 1 0 0;
 
         let q = List.hd packet.questions in
         assert_equal ~msg:"q_name" "mirage1.local" (domain_name_to_string q.q_name);
@@ -222,18 +214,7 @@ let tests =
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
         let packet = parse txbuf in
-        assert_equal ~msg:"id" 0 packet.id;
-        assert_equal ~msg:"qr" Response packet.detail.qr;
-        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
-        assert_equal ~msg:"aa" true packet.detail.aa;
-        assert_equal ~msg:"tc" false packet.detail.tc;
-        assert_equal ~msg:"rd" false packet.detail.rd;
-        assert_equal ~msg:"ra" false packet.detail.ra;
-        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
-        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
-        assert_equal ~msg:"#an" 3 (List.length packet.answers);
-        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
-        assert_equal ~msg:"#ad" 6 (List.length packet.additionals);
+        assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 3 0 6;
 
         (* Verify the PTR records *)
         (* Unfortunately the order of records is non-deterministic so we build a sorted list first *)
@@ -348,7 +329,7 @@ let tests =
         end
       );
 
-    "probe" >:: (fun test_ctxt ->
+    "probe-normal" >:: (fun test_ctxt ->
         let txlist = ref [] in
         let cond = Lwt_condition.create () in
         let sleepl = ref [] in
@@ -440,19 +421,7 @@ let tests =
         let (txaddr4, txbuf) = List.hd !txlist in
         assert_equal ~msg:"txaddr4" txaddr txaddr4;
         let packet = parse txbuf in
-
-        assert_equal ~msg:"id" 0 packet.id;
-        assert_equal ~msg:"qr" Response packet.detail.qr;
-        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
-        assert_equal ~msg:"aa" true packet.detail.aa;
-        assert_equal ~msg:"tc" false packet.detail.tc;
-        assert_equal ~msg:"rd" false packet.detail.rd;
-        assert_equal ~msg:"ra" false packet.detail.ra;
-        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
-        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
-        assert_equal ~msg:"#an" ~printer:string_of_int 18 (List.length packet.answers);
-        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
-        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+        assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 18 0 0;
 
         (* Verify that the cache flush bit is set on the announced unique record *)
         let rr = List.find (fun rr -> (domain_name_to_string rr.name) = "unique.local") packet.answers in
@@ -463,6 +432,97 @@ let tests =
         match rr.rdata with
         | A addr -> assert_equal ~msg:"unique A" "1.2.3.4" (Ipaddr.V4.to_string addr)
         | _ -> assert_failure "unique RR type";
+      );
+
+    "probe-conflict" >:: (fun test_ctxt ->
+        let txlist = ref [] in
+        let cond = Lwt_condition.create () in
+        let sleepl = ref [] in
+        let module MockTransport = struct
+          let alloc () = allocfn ()
+          let write addr buf =
+            txlist := (addr, buf) :: !txlist;
+            Lwt.return ()
+          let sleep t =
+            sleepl := t :: !sleepl;
+            Lwt_condition.wait cond
+        end in
+        let module Server = Mdns_server.Make(MockTransport) in
+        let zonebuf = load_file "test_mdns.zone" in
+        let server = Server.of_zonebufs [zonebuf] in
+
+        (* Add a unique hostname *)
+        let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
+        let unique_name = "unique.local" in
+        Server.add_unique_hostname server unique_name unique_ip;
+
+        (* Create the probe thread *)
+        let probe_thread = Server.probe server in
+        (* Wait for the first sleep *)
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 0 do
+          Lwt_engine.iter false
+        done;
+        assert_equal ~msg:"#sleepl first" ~printer:string_of_int 1 (List.length !sleepl);
+        assert_equal ~msg:"#txlist first" ~printer:string_of_int 0 (List.length !txlist);
+        (* Verify the sleep duration *)
+        assert_range 0.0 0.25 (List.hd !sleepl);
+
+        (* Wait for the first probe to be sent and the second sleep *)
+        Lwt_condition.signal cond ();
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
+          Lwt_engine.iter true
+        done;
+        assert_equal ~msg:"#sleepl second" ~printer:string_of_int 2 (List.length !sleepl);
+        assert_equal ~msg:"#txlist second" ~printer:string_of_int 1 (List.length !txlist);
+        (* Verify the first transmitted probe *)
+        let (txaddr, txbuf) = List.hd !txlist in
+        let (txip, txport) = txaddr in
+        assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
+        assert_equal ~printer:string_of_int 5353 txport;
+        let packet = parse txbuf in
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:unique.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        (* Verify the sleep duration *)
+        assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
+
+        (* Simulate a conflicting response *)
+        let response_src_ip = Ipaddr.V4.of_string_exn "10.0.0.3" in
+        let answer = { name=string_to_domain_name unique_name; cls=RR_IN; flush=true; ttl=120l; rdata=A response_src_ip } in
+        let response = {
+          id=0;
+          detail= {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError};
+          questions=[]; answers=[answer]; authorities=[]; additionals=[];
+        } in
+        let response_buf = marshal (Dns.Buf.create 512) response in
+        let probe_thread2 = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
+
+        (* Wait for the first sleep of the new probe phase *)
+        while Lwt.is_sleeping probe_thread2 && List.length !sleepl = 2 do
+          Lwt_engine.iter false
+        done;
+        assert_equal ~msg:"#sleepl first2" ~printer:string_of_int 3 (List.length !sleepl);
+        assert_equal ~msg:"#txlist first2" ~printer:string_of_int 1 (List.length !txlist);
+        (* Verify the sleep duration *)
+        assert_range 0.0 0.25 (List.hd !sleepl);
+
+        (* Wait for the first probe to be sent and the second sleep *)
+        Lwt_condition.signal cond ();  (* Wake probe_thread *)
+        Lwt_condition.signal cond ();  (* Wake probe_thread2 *)
+        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
+          Lwt_engine.iter true
+        done;
+        assert_equal ~msg:"#sleepl second2" ~printer:string_of_int 4 (List.length !sleepl);
+        assert_equal ~msg:"#txlist second2" ~printer:string_of_int 2 (List.length !txlist);
+        (* Verify the probe *)
+        let (txaddr, txbuf) = List.hd !txlist in
+        let (txip, txport) = txaddr in
+        assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
+        assert_equal ~printer:string_of_int 5353 txport;
+        let packet = parse txbuf in
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique2.local. <ANY_TYP|IN|QU>> <an:> <au:unique2.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        (* Verify the sleep duration *)
+        assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
       );
 
     "announce" >:: (fun test_ctxt ->
@@ -496,19 +556,7 @@ let tests =
         assert_equal ~printer:string_of_int 5353 txport;
         assert_equal ~msg:"first sleep should be 1 second" ~printer:string_of_float 1.0 (List.nth !sleepl 1);
         let packet = parse txbuf in
-
-        assert_equal ~msg:"id" 0 packet.id;
-        assert_equal ~msg:"qr" Response packet.detail.qr;
-        assert_equal ~msg:"opcode" Standard packet.detail.opcode;
-        assert_equal ~msg:"aa" true packet.detail.aa;
-        assert_equal ~msg:"tc" false packet.detail.tc;
-        assert_equal ~msg:"rd" false packet.detail.rd;
-        assert_equal ~msg:"ra" false packet.detail.ra;
-        assert_equal ~msg:"rcode" NoError packet.detail.rcode;
-        assert_equal ~msg:"#qu" 0 (List.length packet.questions);
-        assert_equal ~msg:"#an" ~printer:string_of_int 17 (List.length packet.answers);
-        assert_equal ~msg:"#au" 0 (List.length packet.authorities);
-        assert_equal ~msg:"#ad" 0 (List.length packet.additionals);
+        assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 17 0 0;
 
         let sorted = packet.answers |> List.map rr_to_string |> List.sort String.compare in
         let expected_rrs = [

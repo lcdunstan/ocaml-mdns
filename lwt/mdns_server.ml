@@ -34,6 +34,10 @@ module type TRANSPORT = sig
   val sleep : float -> unit Lwt.t
 end
 
+let label str =
+  (* printf "label: %s\n" str; *)
+  MProf.Trace.label str
+
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
 
 let sentinel = DR.Unknown (0, [])
@@ -187,6 +191,7 @@ let rec filter_known_list rr knownl =
       match frr with DR.Unknown _ -> frr | _ -> filter_known_list frr tl
     end
 
+
 module Make (Transport : TRANSPORT) = struct
   type timestamp = int
 
@@ -200,7 +205,6 @@ module Make (Transport : TRANSPORT) = struct
   type unique_state = {
     rdata : DP.rdata;
     mutable probing : bool;
-    mutable response_seen_time : timestamp;
     mutable confirmed : bool;
   }
 
@@ -210,15 +214,20 @@ module Make (Transport : TRANSPORT) = struct
     db : Dns.Loader.db;
     dnstrie : Dns.Trie.dnstrie;
     mutable unique : unique_assoc list;
+    mutable probe_thread : unit Lwt.t;
+    mutable probe_wakener : unit Lwt.u;
   }
+
 
   let of_zonebufs zonebufs =
     let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
         (Dns.Loader.new_db ()) zonebufs in
     let dnstrie = db.Dns.Loader.trie in
-    { db; dnstrie; unique=[] }
+    let probe_thread, probe_wakener = Lwt.wait () in
+    { db; dnstrie; unique=[]; probe_thread; probe_wakener; }
 
   let of_zonebuf zonebuf = of_zonebufs [zonebuf]
+
 
   let add_unique_hostname t name_str ip =
     (* TODO: support IPv6 with AAAA *)
@@ -229,9 +238,10 @@ module Make (Transport : TRANSPORT) = struct
     let key = {name; rrtype=DP.RR_A} in
     let value = {
       rdata=DP.A ip;
-      probing=false; response_seen_time=0; confirmed=false
+      probing=false; confirmed=false
     } in
     t.unique <- (key, value) :: t.unique
+
 
   let unique_of_key t name rrtype =
     try
@@ -251,6 +261,7 @@ module Make (Transport : TRANSPORT) = struct
     match unique_of_key t owner (DP.rdata_to_rr_type rdata) with
     | Some unique -> unique.confirmed
     | None -> false
+
 
   let prepare_probe t =
     let questions = ref [] in
@@ -292,27 +303,48 @@ module Make (Transport : TRANSPORT) = struct
       let obuf = DP.marshal (Transport.alloc ()) query in
       Some obuf
 
-  let probe t =
+
+  exception RestartProbe
+
+  let try_probe t =
+    let probe_thread, probe_wakener = Lwt.wait () in
+    t.probe_thread <- probe_thread;
+    t.probe_wakener <- probe_wakener;
     (* TODO: probes should be per-link if there are multiple NICs *)
-    MProf.Trace.label "probe";
+    label "probe";
     match prepare_probe t with
-    | None -> return ()
+    | None -> return_unit
     | Some probe ->
+      let delay f =
+        if t.probe_thread != probe_thread then
+          failwith "Multiple probe threads created";
+        Lwt.choose [Transport.sleep f; probe_thread] >>= fun () ->
+        if t.probe_thread != probe_thread then
+          failwith "Multiple probe threads created";
+        return_unit
+      in
       (* Random delay of 0-250 ms *)
-      Transport.sleep (Random.float 0.25) >>= fun () ->
+      label "probe.d1";
+      delay (Random.float 0.25) >>= fun () ->
       (* First probe *)
       let dest = (multicast_ip,5353) in
+      label "probe.w1";
       Transport.write dest probe >>= fun () ->
       (* Fixed delay of 250 ms *)
-      Transport.sleep 0.25 >>= fun () ->
+      label "probe.d2";
+      delay 0.25 >>= fun () ->
       (* Second probe *)
+      label "probe.w2";
       Transport.write dest probe >>= fun () ->
       (* Fixed delay of 250 ms *)
-      Transport.sleep 0.25 >>= fun () ->
+      label "probe.d3";
+      delay 0.25 >>= fun () ->
       (* Third probe *)
+      label "probe.w3";
       Transport.write dest probe >>= fun () ->
       (* Fixed delay of 250 ms *)
-      Transport.sleep 0.25 >>= fun () ->
+      label "probe.d3";
+      delay 0.25 >>= fun () ->
       (* Now confirmed unique *)
       List.iter (fun (key,unique) ->
           if unique.probing then begin
@@ -320,10 +352,18 @@ module Make (Transport : TRANSPORT) = struct
             unique.confirmed <- true
           end
         ) t.unique;
-      return ()
+      return_unit
+
+  let rec probe t =
+    try
+      try_probe t
+    with RestartProbe ->
+      label "probe.restart";
+      Transport.sleep 1.0 >>= fun () ->
+      probe t
 
   let announce t ~repeat =
-    MProf.Trace.label "announce";
+    label "announce";
     let questions = ref [] in
     let build_questions node =
       let q = DP.({
@@ -355,7 +395,7 @@ module Make (Transport : TRANSPORT) = struct
       (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
       Transport.write dest obuf >>= fun () ->
       if repeat = 1 then
-        return ()
+        return_unit
       else
         Transport.sleep sleept >>= fun () ->
         write_repeat dest obuf (repeat - 1) (sleept *. 2.0)
@@ -374,21 +414,22 @@ module Make (Transport : TRANSPORT) = struct
     }) in
     let response = DQ.response_of_answer ~mdns:true fake_query answer in
     if response.DP.answers = [] then
-      return ()
+      return_unit
     else
       (* TODO: limit the response packet size *)
       let obuf = Transport.alloc () in
       match DS.marshal obuf fake_query response with
-      | None -> return ()
+      | None -> return_unit
       | Some obuf -> write_repeat (dest_host,dest_port) obuf repeat 1.0
 
-  let get_answer t dp =
+
+  let get_answer t query =
     let filter name rrset =
       (* RFC 6762 section 7.1 - Known Answer Suppression *)
       (* First match on owner name and check TTL *)
       let relevant_known = List.filter (fun known ->
           (name = known.DP.name) && (known.DP.ttl >= Int32.div rrset.DR.ttl 2l)
-        ) dp.DP.answers
+        ) query.DP.answers
       in
       (* Now suppress known records based on RR type *)
       let rdata = filter_known_list rrset.DR.rdata relevant_known in
@@ -398,66 +439,156 @@ module Make (Transport : TRANSPORT) = struct
       }
     in
     (* DNSSEC disabled for testing *)
-    DQ.answer_multiple ~dnssec:false ~mdns:true ~filter ~flush:(is_confirmed_unique t) dp.DP.questions t.dnstrie
+    DQ.answer_multiple ~dnssec:false ~mdns:true ~filter ~flush:(is_confirmed_unique t) query.DP.questions t.dnstrie
 
-  let process_query t src dst dp =
+  let process_query t src dst query =
+    let check_conflicts query response =
+      List.iter (fun (key, unique) ->
+          if unique.probing then
+            try
+              (* A "simultaneous probe conflict" occurs if we see a (probe) request
+                 that contains a question matching one of our unique records,
+                 and the authority section contains different data. *)
+              let auth = List.find (fun auth -> (auth.DP.name = key.name) && ((DP.rdata_to_rr_type auth.DP.rdata) = key.rrtype)) query.DP.authorities in
+              let _ = List.find (fun q -> q.DP.q_name = key.name) query.DP.questions in
+              let ans = List.find (fun ans -> ans.DP.name = key.name && (DP.rdata_to_rr_type ans.DP.rdata) = key.rrtype) response.DP.answers in
+              (* TODO: proper lexicographical comparison *)
+              let compare = DP.compare_rdata ans.DP.rdata auth.DP.rdata in
+              if compare < 0 then begin
+                (* Our data is less than the requester's data, so restart the probe sequence *)
+                unique.probing <- false;
+                Lwt.wakeup_exn t.probe_wakener RestartProbe
+              end
+            (* else if compare > 0 then the requester will restart its own probe sequence *)
+            (* else if compare = 0 then there is no conflict *)
+            with
+            | Not_found -> ()
+        ) t.unique
+    in
     let get_delay legacy response =
       if legacy then
-        (* Zero delay for legacy mode *)
-        return ()
+        (* No delay for legacy mode *)
+        return_unit
       else if List.exists (fun a -> a.DP.flush) response.DP.answers then
-        (* Zero delay for records that have been verified as unique *)
+        (* No delay for records that have been verified as unique *)
         (* TODO: send separate unique and non-unique responses if applicable *)
-        return ()
+        return_unit
       else
         (* Delay response for 20-120 ms *)
         Transport.sleep (0.02 +. Random.float 0.1)
     in
-    match Dns.Protocol.contain_exc "answer" (fun () -> get_answer t dp) with
-    | None -> return ()
-    | Some answer when answer.DQ.answer = [] -> return ()
+    match Dns.Protocol.contain_exc "answer" (fun () -> get_answer t query) with
+    | None -> return_unit
+    | Some answer when answer.DQ.answer = [] -> return_unit
     | Some answer ->
       let src_host, src_port = src in
+      (* TODO: possibly send unicast responses (QU) *)
       let legacy = (src_port != 5353) in
       let reply_host = if legacy then src_host else multicast_ip in
       let reply_port = src_port in
       (* RFC 6762 section 18.5 - TODO: check tc bit *)
-      MProf.Trace.label "post delay";
+      label "post delay";
       (* NOTE: echoing of questions is still required for legacy mode *)
-      let response = DQ.response_of_answer ~mdns:(not legacy) dp answer in
+      let response = DQ.response_of_answer ~mdns:(not legacy) query answer in
       if response.DP.answers = [] then
-        return ()
+        return_unit
       else
         begin
+          check_conflicts query response;
           (* Possible delay before responding *)
           get_delay legacy response >>= fun () ->
           (* TODO: limit the response packet size *)
           let obuf = Transport.alloc () in
-          match DS.marshal obuf dp response with
-          | None -> return ()
+          match DS.marshal obuf query response with
+          | None -> return_unit
           | Some obuf ->
             (* RFC 6762 section 11 - TODO: send with IP TTL = 255 *)
             Transport.write (reply_host,reply_port) obuf
         end
 
-  let process_response t dp =
+
+  let rename_unique t old_key old_value =
+    let increment_name name =
+      let head = List.hd name in
+      let re = Re_str.regexp "\\(.*\\)\\([0-9]+\\)" in
+      let new_head = if Re_str.string_match re head 0 then begin
+          let num = int_of_string (Re_str.matched_group 2 head) in
+          (Re_str.matched_group 1 head) ^ (string_of_int (num + 1))
+        end else
+          head ^ "2"
+      in
+      new_head :: (List.tl name)
+    in
+    (* TODO: we only support A records at the moment *)
+    assert (old_key.rrtype = DP.RR_A);
+    (* Find the old RR from the trie *)
+    let rrsets = match Dns.Trie.simple_lookup (Dns.Name.canon2key old_key.name) t.dnstrie with
+      | None -> failwith "rename_unique: old not not found"
+      | Some node ->
+        let rrsets = node.DR.rrsets in
+        (* Remove the rrsets from the old node *)
+        (* TODO: remove the node itself *)
+        node.DR.rrsets <- [];
+        rrsets
+    in
+    (* Create a new name *)
+    let new_name = increment_name old_key.name in
+    let new_key = { name=new_name; rrtype=old_key.rrtype } in
+    let new_value = { rdata=old_value.rdata; probing=false; confirmed=false } in
+    (* Add the new RR to the trie *)
+    (* TODO: Dns.Loader doesn't support a simple rename operation *)
+    List.iter (fun rrset -> match rrset.DR.rdata with
+        | DR.A l -> List.iter (fun ip -> Dns.Loader.add_a_rr ip rrset.DR.ttl new_name t.db) l
+        | _ -> failwith "Only A records are supported") rrsets;
+    (* Remove the old entry from the association list and add the new one *)
+    let l = List.remove_assoc old_key t.unique in
+    t.unique <- (new_key, new_value) :: l
+
+  let process_response t response =
+    let conflict_exists l =
+      List.exists (fun (key, unique) ->
+          try
+            let rr = List.find (fun rr -> rr.DP.name = key.name && (DP.rdata_to_rr_type rr.DP.rdata) = key.rrtype) l in
+            (* TODO: proper lexicographical comparison *)
+            let compare = DP.compare_rdata rr.DP.rdata unique.rdata in
+            if compare <> 0 then begin
+              (* If we are currently probing then we must defer to the existing host *)
+              (* In any case we must then re-probe *)
+              if unique.probing then begin
+                printf "Conflict during probe\n";
+                rename_unique t key unique;
+              end else
+                printf "Conflict outside probe\n";
+              unique.probing <- false;
+              unique.confirmed <- false;
+              true
+            end else
+              false
+          (* else if compare = 0 then there is no conflict *)
+          with
+          | Not_found -> false
+        ) t.unique
+    in
     (* Check for conflicts with our unique records *)
-    (* TODO: process responses *)
-    (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
-    printf "Response ignored.\n%!";
-    return ()
+    (* RFC 6762 section 9 - need to check all sections *)
+    if conflict_exists response.DP.answers || conflict_exists response.DP.authorities || conflict_exists response.DP.additionals then
+      probe t
+    else
+      (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
+      return_unit
+
 
   let process t ~src ~dst ibuf =
-    MProf.Trace.label "mDNS process";
+    label "mDNS process";
     let open DP in
     match DS.parse ibuf with
-    | None -> return ()
+    | None -> return_unit
     | Some dp when dp.detail.opcode != Standard ->
       (* RFC 6762 section 18.3 *)
-      return ()
+      return_unit
     | Some dp when dp.detail.rcode != NoError ->
       (* RFC 6762 section 18.11 *)
-      return ()
+      return_unit
     | Some dp when dp.detail.qr = Query -> process_query t src dst dp
     | Some dp -> process_response t dp
 
