@@ -35,7 +35,7 @@ module type TRANSPORT = sig
 end
 
 let label str =
-  (* printf "label: %s\n" str; *)
+  (* printf "label: %s\n%!" str; *)
   MProf.Trace.label str
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
@@ -213,9 +213,12 @@ module Make (Transport : TRANSPORT) = struct
   type t = {
     db : Dns.Loader.db;
     dnstrie : Dns.Trie.dnstrie;
+    probe_condition : unit Lwt_condition.t;
     mutable unique : unique_assoc list;
-    mutable probe_thread : unit Lwt.t;
-    mutable probe_wakener : unit Lwt.u;
+    mutable probe_forever : unit Lwt.t;
+    mutable probe_restart : bool;
+    mutable probe_tiebreak : bool;
+    mutable probe_end : bool;
   }
 
 
@@ -223,8 +226,13 @@ module Make (Transport : TRANSPORT) = struct
     let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
         (Dns.Loader.new_db ()) zonebufs in
     let dnstrie = db.Dns.Loader.trie in
-    let probe_thread, probe_wakener = Lwt.wait () in
-    { db; dnstrie; unique=[]; probe_thread; probe_wakener; }
+    {
+      db; dnstrie;
+      probe_condition = Lwt_condition.create ();
+      unique=[];
+      probe_forever=return_unit;
+      probe_restart=false; probe_tiebreak=false; probe_end=false;
+    }
 
   let of_zonebuf zonebuf = of_zonebufs [zonebuf]
 
@@ -270,16 +278,16 @@ module Make (Transport : TRANSPORT) = struct
       let probe_rrset rrset =
         match unique_of_rrset t node.DR.owner.H.node rrset.DR.rdata with
         | Some unique ->
-          if unique.confirmed then
+          if unique.confirmed then begin
+            assert (not unique.probing);
             false  (* Only probe if not already confirmed *)
-          else
-            begin
-              unique.probing <- true;
-              (* RFC 6762 section 8.2 - populate the Authority section *)
-              let auth = DP.({name=node.DR.owner.H.node; cls=DP.RR_IN; flush=true; ttl=120l; rdata=unique.rdata}) in
-              authorities := auth :: !authorities;
-              true
-            end
+          end else begin
+            unique.probing <- true;
+            (* RFC 6762 section 8.2 - populate the Authority section *)
+            let auth = DP.({name=node.DR.owner.H.node; cls=DP.RR_IN; flush=true; ttl=120l; rdata=unique.rdata}) in
+            authorities := auth :: !authorities;
+            true
+          end
         | None -> false
       in
       (* The probe question specifies Q_ANY_TYP, so we send it if any of the RRs are unique *)
@@ -306,61 +314,121 @@ module Make (Transport : TRANSPORT) = struct
 
   exception RestartProbe
 
-  let try_probe t =
-    let probe_thread, probe_wakener = Lwt.wait () in
-    t.probe_thread <- probe_thread;
-    t.probe_wakener <- probe_wakener;
-    (* TODO: probes should be per-link if there are multiple NICs *)
-    label "probe";
-    match prepare_probe t with
-    | None -> return_unit
-    | Some probe ->
-      let delay f =
-        if t.probe_thread != probe_thread then
-          failwith "Multiple probe threads created";
-        Lwt.choose [Transport.sleep f; probe_thread] >>= fun () ->
-        if t.probe_thread != probe_thread then
-          failwith "Multiple probe threads created";
-        return_unit
-      in
-      (* Random delay of 0-250 ms *)
-      label "probe.d1";
-      delay (Random.float 0.25) >>= fun () ->
-      (* First probe *)
-      let dest = (multicast_ip,5353) in
-      label "probe.w1";
-      Transport.write dest probe >>= fun () ->
-      (* Fixed delay of 250 ms *)
-      label "probe.d2";
-      delay 0.25 >>= fun () ->
-      (* Second probe *)
-      label "probe.w2";
-      Transport.write dest probe >>= fun () ->
-      (* Fixed delay of 250 ms *)
-      label "probe.d3";
-      delay 0.25 >>= fun () ->
-      (* Third probe *)
-      label "probe.w3";
-      Transport.write dest probe >>= fun () ->
-      (* Fixed delay of 250 ms *)
-      label "probe.d3";
-      delay 0.25 >>= fun () ->
-      (* Now confirmed unique *)
-      List.iter (fun (key,unique) ->
-          if unique.probing then begin
-            unique.probing <- false;
-            unique.confirmed <- true
-          end
-        ) t.unique;
-      return_unit
+  let probe_restart t =
+    t.probe_restart <- true;
+    Lwt_condition.signal t.probe_condition ()
 
-  let rec probe t =
-    try
-      try_probe t
-    with RestartProbe ->
-      label "probe.restart";
-      Transport.sleep 1.0 >>= fun () ->
-      probe t
+  let check_probe_restart t =
+    if t.probe_restart then
+      raise RestartProbe
+
+  let sleep t f =
+    (* printf "before sleep\n"; *)
+    Transport.sleep f >>= fun () ->
+    (* printf "after sleep\n"; *)
+    return_unit
+
+  let wait_cond t =
+    (* printf "wait_cond 1\n"; *)
+    Lwt_condition.wait t.probe_condition >>= fun () ->
+    (* printf "wait_cond 2\n"; *)
+    return_unit
+
+  let probe_cycle t packet =
+    let delay f =
+      check_probe_restart t;
+      Lwt.pick [
+        sleep t f;
+        wait_cond t
+      ] >>= fun () ->
+      check_probe_restart t;
+      return_unit
+    in
+    (* First probe *)
+    let dest = (multicast_ip,5353) in
+    label "probe.w1";
+    Transport.write dest packet >>= fun () ->
+    (* Fixed delay of 250 ms *)
+    label "probe.d2";
+    delay 0.25 >>= fun () ->
+    (* Second probe *)
+    label "probe.w2";
+    Transport.write dest packet >>= fun () ->
+    (* Fixed delay of 250 ms *)
+    label "probe.d3";
+    delay 0.25 >>= fun () ->
+    (* Third probe *)
+    label "probe.w3";
+    Transport.write dest packet >>= fun () ->
+    (* Fixed delay of 250 ms *)
+    label "probe.d3";
+    delay 0.25 >>= fun () ->
+    (* Now confirmed unique *)
+    List.iter (fun (key,unique) ->
+        if unique.probing then begin
+          unique.probing <- false;
+          unique.confirmed <- true
+        end
+      ) t.unique;
+    return_unit
+
+  let try_probe t =
+    (* TODO: probes should be per-link if there are multiple NICs *)
+    t.probe_restart <- false;
+    match prepare_probe t with
+    | None ->
+      return false
+    | Some packet ->
+      probe_cycle t packet >>= fun () ->
+      return true
+
+  let rec probe_forever t first first_wakener =
+    begin
+      try_lwt
+(*         printf "probe_forever 1\n"; *)
+        (* If we lose a simultaneous probe tie-break then we have to delay 1 second *)
+        (if t.probe_tiebreak then
+          Transport.sleep 1.0
+        else
+          return_unit) >>= fun () ->
+(*         printf "probe_forever 2\n"; *)
+        try_probe t >>= fun done_probe ->
+(*         printf "probe_forever 3\n"; *)
+        (* We will only reach this point if the probe cycle has completed *)
+        if !first then begin
+          (* Only once, because a thread can only be woken once *)
+          first := false;
+          Lwt.wakeup first_wakener ()
+        end;
+        if done_probe then
+          return_unit
+        else begin
+          (* If there is nothing to do, block until we get a signal *)
+          label "probe_idle";
+          Lwt_condition.wait t.probe_condition
+        end
+      with
+      | RestartProbe -> (* printf "RestartProbe\n";*) return_unit
+      | _ -> printf "Unknown exception\n"; return_unit
+    end >>= fun () ->
+(*     printf "probe_forever 4\n"; *)
+    if t.probe_end then begin
+(*       printf "probe_end\n"; *)
+      return_unit
+    end else begin
+(*       printf "probe_forever 5\n"; *)
+      probe_forever t first first_wakener
+    end
+
+  let first_probe t =
+    label "first_probe";
+    (* Random delay of 0-250 ms *)
+    Transport.sleep (Random.float 0.25) >>= fun () ->
+    let first = ref true in
+    let first_wait, first_wakener = Lwt.wait () in
+    t.probe_forever <- probe_forever t first first_wakener;
+    (* The caller may wait for the first complete probe cycle *)
+    first_wait
 
   let announce t ~repeat =
     label "announce";
@@ -444,6 +512,7 @@ module Make (Transport : TRANSPORT) = struct
   let process_query t src dst query =
     let check_conflicts query response =
       List.iter (fun (key, unique) ->
+          (* Ignore records that are not part of the current probe cycle *)
           if unique.probing then
             try
               (* A "simultaneous probe conflict" occurs if we see a (probe) request
@@ -457,7 +526,8 @@ module Make (Transport : TRANSPORT) = struct
               if compare < 0 then begin
                 (* Our data is less than the requester's data, so restart the probe sequence *)
                 unique.probing <- false;
-                Lwt.wakeup_exn t.probe_wakener RestartProbe
+                t.probe_tiebreak <- true;
+                probe_restart t
               end
             (* else if compare > 0 then the requester will restart its own probe sequence *)
             (* else if compare = 0 then there is no conflict *)
@@ -555,10 +625,10 @@ module Make (Transport : TRANSPORT) = struct
               (* If we are currently probing then we must defer to the existing host *)
               (* In any case we must then re-probe *)
               if unique.probing then begin
-                printf "Conflict during probe\n";
+(*                 printf "Conflict during probe\n"; *)
                 rename_unique t key unique;
-              end else
-                printf "Conflict outside probe\n";
+              end; (* else
+                printf "Conflict outside probe\n"; *)
               unique.probing <- false;
               unique.confirmed <- false;
               true
@@ -572,10 +642,9 @@ module Make (Transport : TRANSPORT) = struct
     (* Check for conflicts with our unique records *)
     (* RFC 6762 section 9 - need to check all sections *)
     if conflict_exists response.DP.answers || conflict_exists response.DP.authorities || conflict_exists response.DP.additionals then
-      probe t
-    else
-      (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
-      return_unit
+      probe_restart t;
+    (* RFC 6762 section 10.5 - TODO: passive observation of failures *)
+    return_unit
 
 
   let process t ~src ~dst ibuf =
@@ -591,6 +660,11 @@ module Make (Transport : TRANSPORT) = struct
       return_unit
     | Some dp when dp.detail.qr = Query -> process_query t src dst dp
     | Some dp -> process_response t dp
+
+  let stop_probe t =
+    t.probe_end <- true;
+    Lwt_condition.signal t.probe_condition ();
+    t.probe_forever
 
   let trie t = t.dnstrie
 

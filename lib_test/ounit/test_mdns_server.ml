@@ -99,6 +99,13 @@ let assert_packet ?(prefix="") ?(id=0) packet expected_detail nq nan nau nad =
   assert_equal ~msg:(prefix ^ "#au") nau (List.length packet.authorities);
   assert_equal ~msg:(prefix ^ "#ad") nad (List.length packet.additionals)
 
+let run_timeout thread =
+  Lwt_main.run (
+    Lwt.pick [
+      Lwt_unix.sleep 1.0;
+      thread
+    ])
+
 let tests =
   "Mdns_server" >:::
   [
@@ -120,7 +127,7 @@ let tests =
         let src = (Ipaddr.V4.of_string_exn "10.0.0.1", 5353) in
         let dst = (Ipaddr.V4.of_string_exn "224.0.0.251", 5353) in
         let thread = Server.process server ~src ~dst raw in
-        Lwt_main.run thread;
+        run_timeout thread;
 
         (* Verify the transmitted packet *)
         assert_equal 1 (List.length !txlist);
@@ -160,7 +167,7 @@ let tests =
         let src = (Ipaddr.V4.of_string_exn "10.0.0.1", 12345) in
         let dst = (Ipaddr.V4.of_string_exn "224.0.0.251", 5353) in
         let thread = Server.process server ~src ~dst raw in
-        Lwt_main.run thread;
+        run_timeout thread;
 
         (* Verify the transmitted packet *)
         assert_equal 1 (List.length !txlist);
@@ -205,7 +212,7 @@ let tests =
         let src = (Ipaddr.V4.of_string_exn "10.0.0.1", 5353) in
         let dst = (Ipaddr.V4.of_string_exn "224.0.0.251", 5353) in
         let thread = Server.process server ~src ~dst raw in
-        Lwt_main.run thread;
+        run_timeout thread;
 
         (* Verify the transmitted packet *)
         assert_equal 1 (List.length !txlist);
@@ -285,7 +292,7 @@ let tests =
         (* Given that the query already contains known answers for
            all relevant records, there should be no reply at all. *)
         let thread = Server.process server ~src ~dst raw in
-        Lwt_main.run thread;
+        run_timeout thread;
       );
 
     "unique" >:: (fun test_ctxt ->
@@ -352,7 +359,7 @@ let tests =
         Server.add_unique_hostname server unique_name unique_ip;
 
         (* Create the probe thread *)
-        let probe_thread = Server.probe server in
+        let probe_thread = Server.first_probe server in
         (* Wait for the first sleep *)
         while Lwt.is_sleeping probe_thread && List.length !sleepl = 0 do
           Lwt_engine.iter false
@@ -363,7 +370,7 @@ let tests =
         assert_range 0.0 0.25 (List.hd !sleepl);
 
         (* Wait for the first probe to be sent and the second sleep *)
-        Lwt_condition.signal cond ();
+        Lwt_condition.signal cond ();  (* Unblock sleep *)
         while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
           Lwt_engine.iter true
         done;
@@ -381,7 +388,7 @@ let tests =
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
 
         (* Wait for the second probe to be sent and the third sleep *)
-        Lwt_condition.signal cond ();
+        Lwt_condition.signal cond ();  (* Unblock sleep *)
         while Lwt.is_sleeping probe_thread && List.length !sleepl = 2 do
           Lwt_engine.iter false
         done;
@@ -395,7 +402,7 @@ let tests =
         assert_equal ~msg:"third sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
 
         (* Wait for the third probe to be sent and the fourth sleep *)
-        Lwt_condition.signal cond ();
+        Lwt_condition.signal cond ();  (* Unblock sleep *)
         while Lwt.is_sleeping probe_thread && List.length !sleepl = 3 do
           Lwt_engine.iter true
         done;
@@ -408,14 +415,14 @@ let tests =
         (* Verify the sleep duration *)
         assert_equal ~msg:"fourth sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
         (* Make sure the probe thread has finished *)
-        Lwt_condition.signal cond ();
+        Lwt_condition.signal cond ();  (* Unblock sleep *)
         while Lwt.is_sleeping probe_thread do
           Lwt_condition.signal cond ();
           Lwt_engine.iter false
         done;
 
         (* Announcement stage *)
-        Lwt_main.run (Server.announce server ~repeat:1);
+        run_timeout (Server.announce server ~repeat:1);
         assert_equal ~msg:"#sleepl announce" ~printer:string_of_int 4 (List.length !sleepl);
         assert_equal ~msg:"#txlist announce" ~printer:string_of_int 4 (List.length !txlist);
         let (txaddr4, txbuf) = List.hd !txlist in
@@ -429,9 +436,13 @@ let tests =
         assert_equal ~msg:"unique cls" RR_IN rr.cls;
         assert_equal ~msg:"unique flush" true rr.flush;
         assert_equal ~msg:"unique ttl" (Int32.of_int 120) rr.ttl;
-        match rr.rdata with
-        | A addr -> assert_equal ~msg:"unique A" "1.2.3.4" (Ipaddr.V4.to_string addr)
-        | _ -> assert_failure "unique RR type";
+        begin
+          match rr.rdata with
+          | A addr -> assert_equal ~msg:"unique A" "1.2.3.4" (Ipaddr.V4.to_string addr)
+          | _ -> assert_failure "unique RR type";
+        end;
+
+        run_timeout (Server.stop_probe server)
       );
 
     "probe-conflict" >:: (fun test_ctxt ->
@@ -439,13 +450,17 @@ let tests =
         let cond = Lwt_condition.create () in
         let sleepl = ref [] in
         let module MockTransport = struct
+          open Lwt
           let alloc () = allocfn ()
           let write addr buf =
             txlist := (addr, buf) :: !txlist;
-            Lwt.return ()
+            return_unit
           let sleep t =
             sleepl := t :: !sleepl;
-            Lwt_condition.wait cond
+            (* printf "sleep %f; #sleepl %d\n" t (List.length !sleepl); *)
+            Lwt_condition.wait cond >>= fun () ->
+            (* printf "sleep done\n"; *)
+            return_unit
         end in
         let module Server = Mdns_server.Make(MockTransport) in
         let zonebuf = load_file "test_mdns.zone" in
@@ -457,9 +472,9 @@ let tests =
         Server.add_unique_hostname server unique_name unique_ip;
 
         (* Create the probe thread *)
-        let probe_thread = Server.probe server in
+        let first_probe = Server.first_probe server in
         (* Wait for the first sleep *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 0 do
+        while Lwt.is_sleeping first_probe && List.length !sleepl = 0 do
           Lwt_engine.iter false
         done;
         assert_equal ~msg:"#sleepl first" ~printer:string_of_int 1 (List.length !sleepl);
@@ -468,8 +483,8 @@ let tests =
         assert_range 0.0 0.25 (List.hd !sleepl);
 
         (* Wait for the first probe to be sent and the second sleep *)
-        Lwt_condition.signal cond ();
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
+        Lwt_condition.signal cond ();  (* Unblock sleep *)
+        while Lwt.is_sleeping first_probe && List.length !sleepl = 1 do
           Lwt_engine.iter true
         done;
         assert_equal ~msg:"#sleepl second" ~printer:string_of_int 2 (List.length !sleepl);
@@ -494,24 +509,13 @@ let tests =
           questions=[]; answers=[answer]; authorities=[]; additionals=[];
         } in
         let response_buf = marshal (Dns.Buf.create 512) response in
-        let probe_thread2 = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
+        let process_thread = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
 
-        (* Wait for the first sleep of the new probe phase *)
-        while Lwt.is_sleeping probe_thread2 && List.length !sleepl = 2 do
-          Lwt_engine.iter false
-        done;
-        assert_equal ~msg:"#sleepl first2" ~printer:string_of_int 3 (List.length !sleepl);
-        assert_equal ~msg:"#txlist first2" ~printer:string_of_int 1 (List.length !txlist);
-        (* Verify the sleep duration *)
-        assert_range 0.0 0.25 (List.hd !sleepl);
-
-        (* Wait for the first probe to be sent and the second sleep *)
-        Lwt_condition.signal cond ();  (* Wake probe_thread *)
-        Lwt_condition.signal cond ();  (* Wake probe_thread2 *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
+        (* A new probe cycle begins *)
+        while Lwt.is_sleeping process_thread && List.length !sleepl = 2 do
           Lwt_engine.iter true
         done;
-        assert_equal ~msg:"#sleepl second2" ~printer:string_of_int 4 (List.length !sleepl);
+        assert_equal ~msg:"#sleepl second2" ~printer:string_of_int 3 (List.length !sleepl);
         assert_equal ~msg:"#txlist second2" ~printer:string_of_int 2 (List.length !txlist);
         (* Verify the probe *)
         let (txaddr, txbuf) = List.hd !txlist in
@@ -523,6 +527,7 @@ let tests =
         assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
+        (* Ignore the rest of the cycle *)
       );
 
     "announce" >:: (fun test_ctxt ->
@@ -541,15 +546,20 @@ let tests =
         let zonebuf = load_file "test_mdns.zone" in
         let server = Server.of_zonebufs [zonebuf] in
         (* Probe should do nothing because there are no unique records *)
-        Lwt_main.run (Server.probe server);
-        assert_equal ~msg:"probe shouldn't send" 0 (List.length !txlist);
-        assert_equal ~msg:"probe shouldn't sleep" 0 (List.length !sleepl);
+(*         printf "before first_probe\n%!"; *)
+        run_timeout (Server.first_probe server);
+(*         printf "after first_probe\n%!"; *)
+        assert_equal ~msg:"probe shouldn't send" ~printer:string_of_int 0 (List.length !txlist);
+        assert_equal ~msg:"initial sleep" ~printer:string_of_int 1 (List.length !sleepl);
+        (* Verify the sleep duration *)
+        assert_range 0.0 0.25 (List.hd !sleepl);
+
         (* Announce *)
-        Lwt_main.run (Server.announce server ~repeat:3);
+        run_timeout (Server.announce server ~repeat:3);
 
         (* Verify the first transmitted packet *)
-        assert_equal 3 (List.length !txlist);
-        assert_equal 2 (List.length !sleepl);
+        assert_equal ~printer:string_of_int 3 (List.length !txlist);
+        assert_equal ~printer:string_of_int 3 (List.length !sleepl);
         let (txaddr, txbuf) = List.nth !txlist 2 in
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);

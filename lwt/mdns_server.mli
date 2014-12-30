@@ -32,9 +32,10 @@ module Make : functor (Transport : TRANSPORT) -> sig
   val of_zonebuf : string -> t
 
   val add_unique_hostname : t -> string -> Ipaddr.V4.t -> unit
-  val probe : t -> unit Lwt.t
+  val first_probe : t -> unit Lwt.t
   val announce : t -> repeat:int -> unit Lwt.t
   val process : t -> src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
+  val stop_probe : t -> unit Lwt.t
 
   val trie : t -> Dns.Trie.dnstrie
 end
