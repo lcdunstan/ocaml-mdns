@@ -361,9 +361,6 @@ let tests =
         (* Create the probe thread *)
         let probe_thread = Server.first_probe server in
         (* Wait for the first sleep *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 0 do
-          Lwt_engine.iter false
-        done;
         assert_equal ~msg:"#sleepl first" ~printer:string_of_int 1 (List.length !sleepl);
         assert_equal ~msg:"#txlist first" ~printer:string_of_int 0 (List.length !txlist);
         (* Verify the sleep duration *)
@@ -371,9 +368,6 @@ let tests =
 
         (* Wait for the first probe to be sent and the second sleep *)
         Lwt_condition.signal cond ();  (* Unblock sleep *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 1 do
-          Lwt_engine.iter true
-        done;
         assert_equal ~msg:"#sleepl second" ~printer:string_of_int 2 (List.length !sleepl);
         assert_equal ~msg:"#txlist second" ~printer:string_of_int 1 (List.length !txlist);
         (* Verify the first transmitted probe *)
@@ -389,9 +383,6 @@ let tests =
 
         (* Wait for the second probe to be sent and the third sleep *)
         Lwt_condition.signal cond ();  (* Unblock sleep *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 2 do
-          Lwt_engine.iter false
-        done;
         assert_equal ~msg:"#sleepl third" ~printer:string_of_int 3 (List.length !sleepl);
         assert_equal ~msg:"#txlist third" ~printer:string_of_int 2 (List.length !txlist);
         (* The second packet should be exactly the same *)
@@ -403,9 +394,6 @@ let tests =
 
         (* Wait for the third probe to be sent and the fourth sleep *)
         Lwt_condition.signal cond ();  (* Unblock sleep *)
-        while Lwt.is_sleeping probe_thread && List.length !sleepl = 3 do
-          Lwt_engine.iter true
-        done;
         assert_equal ~msg:"#sleepl fourth" ~printer:string_of_int 4 (List.length !sleepl);
         assert_equal ~msg:"#txlist fourth" ~printer:string_of_int 3 (List.length !txlist);
         (* The third packet should be exactly the same *)
@@ -472,11 +460,8 @@ let tests =
         Server.add_unique_hostname server unique_name unique_ip;
 
         (* Create the probe thread *)
-        let first_probe = Server.first_probe server in
+        let _ = Server.first_probe server in
         (* Wait for the first sleep *)
-        while Lwt.is_sleeping first_probe && List.length !sleepl = 0 do
-          Lwt_engine.iter false
-        done;
         assert_equal ~msg:"#sleepl first" ~printer:string_of_int 1 (List.length !sleepl);
         assert_equal ~msg:"#txlist first" ~printer:string_of_int 0 (List.length !txlist);
         (* Verify the sleep duration *)
@@ -484,9 +469,6 @@ let tests =
 
         (* Wait for the first probe to be sent and the second sleep *)
         Lwt_condition.signal cond ();  (* Unblock sleep *)
-        while Lwt.is_sleeping first_probe && List.length !sleepl = 1 do
-          Lwt_engine.iter true
-        done;
         assert_equal ~msg:"#sleepl second" ~printer:string_of_int 2 (List.length !sleepl);
         assert_equal ~msg:"#txlist second" ~printer:string_of_int 1 (List.length !txlist);
         (* Verify the first transmitted probe *)
@@ -509,12 +491,9 @@ let tests =
           questions=[]; answers=[answer]; authorities=[]; additionals=[];
         } in
         let response_buf = marshal (Dns.Buf.create 512) response in
-        let process_thread = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
+        let _ = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
 
         (* A new probe cycle begins *)
-        while Lwt.is_sleeping process_thread && List.length !sleepl = 2 do
-          Lwt_engine.iter true
-        done;
         assert_equal ~msg:"#sleepl second2" ~printer:string_of_int 3 (List.length !sleepl);
         assert_equal ~msg:"#txlist second2" ~printer:string_of_int 2 (List.length !txlist);
         (* Verify the probe *)
