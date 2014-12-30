@@ -35,7 +35,7 @@ module type TRANSPORT = sig
 end
 
 let label str =
-  (* printf "label: %s\n%!" str; *)
+(*   printf "label: %s\n%!" str; *)
   MProf.Trace.label str
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
@@ -510,7 +510,8 @@ module Make (Transport : TRANSPORT) = struct
     DQ.answer_multiple ~dnssec:false ~mdns:true ~filter ~flush:(is_confirmed_unique t) query.DP.questions t.dnstrie
 
   let process_query t src dst query =
-    let check_conflicts query response =
+    let check_unique query response =
+      (* First check for conflicts *)
       List.iter (fun (key, unique) ->
           (* Ignore records that are not part of the current probe cycle *)
           if unique.probing then
@@ -533,7 +534,14 @@ module Make (Transport : TRANSPORT) = struct
             (* else if compare = 0 then there is no conflict *)
             with
             | Not_found -> ()
-        ) t.unique
+        ) t.unique;
+      (* Now filter out answers that are unique but unconfirmed *)
+      let answers = List.filter (fun rr ->
+          match unique_of_key t rr.DP.name (DP.rdata_to_rr_type rr.DP.rdata) with
+          | Some unique -> unique.confirmed  (* Exclude if unconfirmed *)
+          | None -> true  (* OK, not unique *)
+        ) response.DP.answers in
+      { response with DP.answers = answers }
     in
     let get_delay legacy response =
       if legacy then
@@ -552,19 +560,26 @@ module Make (Transport : TRANSPORT) = struct
     | Some answer when answer.DQ.answer = [] -> return_unit
     | Some answer ->
       let src_host, src_port = src in
-      (* TODO: possibly send unicast responses (QU) *)
       let legacy = (src_port != 5353) in
-      let reply_host = if legacy then src_host else multicast_ip in
+      let unicast =
+        (* True if all of the questions have the unicast response bit set *)
+        (* TODO: split into separate unicast and multicast responses if applicable *)
+        if legacy then
+          false
+        else
+          List.fold_left (fun all_unicast q -> all_unicast && (q.DP.q_unicast = DP.QU)) true query.DP.questions
+      in
+      let reply_host = if legacy || unicast then src_host else multicast_ip in
       let reply_port = src_port in
       (* RFC 6762 section 18.5 - TODO: check tc bit *)
       label "post delay";
       (* NOTE: echoing of questions is still required for legacy mode *)
       let response = DQ.response_of_answer ~mdns:(not legacy) query answer in
+      let response = check_unique query response in
       if response.DP.answers = [] then
         return_unit
       else
         begin
-          check_conflicts query response;
           (* Possible delay before responding *)
           get_delay legacy response >>= fun () ->
           (* TODO: limit the response packet size *)
