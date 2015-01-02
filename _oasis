@@ -40,24 +40,24 @@ Library "mdns-lwt-core"
   Install$: flag(lwt)
   Findlibname: lwt-core
   Modules: Mdns_server
-  BuildDepends: mdns, lwt.unix (>= 2.4.1), cstruct.lwt, lwt.syntax, dns, dns.lwt-core, ipaddr.unix, mirage-profile
-  XMetaRequires: mdns, lwt.unix, cstruct.lwt, dns, dns.lwt-core, ipaddr.unix
+  BuildDepends: lwt, cstruct, lwt.syntax, mdns, mirage-profile
+  XMetaRequires: lwt, cstruct, mdns, mirage-profile
   FindlibParent: mdns
 
-#Library "mdns-unix"
+#Library "mdns-lwt-unix"
 #  Path: lwt
-#  Build$: flag(lwt) && flag(todo)
-#  Install$: flag(lwt) && flag(todo)
-#  Findlibname: unix
-#  Modules: Mdns_server_unix, Mdns_resolver_unix
+#  Build$: flag(lwt)
+#  Install$: flag(lwt)
+#  Findlibname: lwt-unix
+#  Modules: Mdns_server_unix
 #  BuildDepends: lwt.unix (>= 2.4.1), cstruct.lwt, lwt.syntax, mdns, mdns.lwt-core, ipaddr.unix
 #  XMetaRequires: lwt.unix, cstruct.lwt, mdns, mdns.lwt-core, ipaddr.unix
 #  FindlibParent: mdns
 
 #Library "mdns-mirage"
 #  Path: mirage
-#  Build$: flag(mirage) && flag(todo)
-#  Install$: flag(mirage) && flag(todo)
+#  Build$: flag(mirage)
+#  Install$: flag(mirage)
 #  Findlibname: mirage
 #  Modules: Mdns_resolver_mirage
 #  BuildDepends: cstruct, lwt.syntax, mdns, mdns.lwt-core, mirage-types, io-page
@@ -90,7 +90,7 @@ Executable test
   Custom:             true
   CompiledObject:     best
   Install:            false
-  BuildDepends:       mdns.lwt-core, unix, oUnit, pcap-format
+  BuildDepends:       lwt.unix (>= 2.4.1), mdns.lwt-core, unix, oUnit, pcap-format
 
 Test test
   Run$:               flag(tests)
