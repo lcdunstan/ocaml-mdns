@@ -31,7 +31,7 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         let alloc () = Io_page.get 1
         let write (dest_ip,dest_port) txbuf =
           U.write ~source_port:listening_port ~dest_ip:dest_ip ~dest_port udp (Cstruct.of_bigarray txbuf)
-        let sleep t = Lwt_unix.sleep t
+        let sleep t = OS.Time.sleep t
       end)
     in
     let server = Server.of_zonebuf zonebuf in
