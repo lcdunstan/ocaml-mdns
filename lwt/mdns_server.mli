@@ -17,8 +17,6 @@
 
 type ip_endpoint = Ipaddr.V4.t * int
 
-type unique = Unique | Shared
-
 module type TRANSPORT = sig
   val alloc : unit -> Dns.Buf.t
   val write : ip_endpoint -> Dns.Buf.t -> unit Lwt.t
