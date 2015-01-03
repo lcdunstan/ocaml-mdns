@@ -1,17 +1,16 @@
 # Plan
 
-## Experiments
-
-- [x] Write a Unix-only multicast example with https://github.com/vbmithr/ocaml-sockopt (e.g. via https://github.com/vbmithr/ocaml-llnet)
-- [x] Add Lwt
-- [x] test UDP multicast receive on Mirage+Xen
-- [x] test UDP multicast transmit on Mirage+Xen
-- [x] Test a minimal legacy resolver for mDNS
-- [x] Write a small responder for mDNS shared records only
-
 ## mDNS
 
-- [x] 
+- [x] Write a small responder for mDNS shared records only
+- [x] Test a minimal responder with a unique A record
+- [x] Implement announcements
+- [ ] Implement/Test IPv6
+- [ ] Implement the proper simultaneous probe tiebreaking rules
+- [ ] Investigate automated acceptance tests
+- [ ] Create a resolver that can use both DNS and mDNS
+- [ ] Create a DNS-SD resolver (continuous query)
+
 ## TCP/IP Stack
 
 - [ ] Extend tcpip-stack-direct with support for UDP multicast
