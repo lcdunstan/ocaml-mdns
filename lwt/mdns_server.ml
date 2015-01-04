@@ -193,119 +193,99 @@ let rec filter_known_list rr knownl =
 module Make (Transport : TRANSPORT) = struct
   type timestamp = int
 
-  type unique_key = {
-    (* RFC 6762 section 10.2: uniqueness is based on name/rrtype/rrclass *)
-    name : Dns.Name.domain_name;
-    rrtype : DP.rr_type;
-    (* The only rrclass we support is RR_IN *)
-  }
-
-  type unique_state = {
-    rdata : DP.rdata;
-    mutable probing : bool;
-    mutable confirmed : bool;
-  }
-
+  (* RFC 6762 section 10.2 implies that uniqueness is based on name/rrtype/rrclass,
+     but section 8.1 implies that a domain name is enough. *)
+  type unique_key = Dns.Name.domain_name
+  type unique_state = PreProbe | Probing | Confirmed
   type unique_assoc = unique_key * unique_state
 
   type t = {
     db : Dns.Loader.db;
     dnstrie : Dns.Trie.dnstrie;
     probe_condition : unit Lwt_condition.t;
-    mutable unique : unique_assoc list;
+    unique : (unique_key, unique_state) Hashtbl.t;
     mutable probe_forever : unit Lwt.t;
     mutable probe_restart : bool;
     mutable probe_tiebreak : bool;
     mutable probe_end : bool;
+    mutable probe_rrs : DP.rr list;
   }
 
 
-  let of_zonebufs zonebufs =
-    let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
-        (Dns.Loader.new_db ()) zonebufs in
+  let of_db db =
     let dnstrie = db.Dns.Loader.trie in
     {
       db; dnstrie;
       probe_condition = Lwt_condition.create ();
-      unique=[];
+      unique = Hashtbl.create 10;
       probe_forever=return_unit;
       probe_restart=false; probe_tiebreak=false; probe_end=false;
+      probe_rrs=[];
     }
+
+  let of_zonebufs zonebufs =
+    let db = List.fold_left (fun db -> Dns.Zone.load ~db []) 
+        (Dns.Loader.new_db ()) zonebufs in
+    of_db db
 
   let of_zonebuf zonebuf = of_zonebufs [zonebuf]
 
 
-  let add_unique_hostname t name_str ip =
+  let add_unique_hostname t name ip =
     (* TODO: support IPv6 with AAAA *)
-    let name = Dns.Name.string_to_domain_name name_str in
     (* Add it to the trie *)
     Dns.Loader.add_a_rr ip 120l name t.db;
-    (* Add an entry to our own list of unique records *)
-    let key = {name; rrtype=DP.RR_A} in
-    let value = {
-      rdata=DP.A ip;
-      probing=false; confirmed=false
-    } in
-    t.unique <- (key, value) :: t.unique
+    (* Add an entry to our own table of unique records *)
+    Hashtbl.add t.unique name PreProbe
 
 
-  let unique_of_key t name rrtype =
+  let unique_of_key t name =
     try
-      let unique = List.assoc {name; rrtype} t.unique in
-      Some unique
+      let state = Hashtbl.find t.unique name in
+      Some state
     with
     | Not_found -> None
-
-  let unique_of_rrset t name rrset =
-    match rrset with
-    | DR.A l -> unique_of_key t name DP.RR_A
-    | _ -> None  (* TODO *)
 
   (* This predicate controls the cache-flush bit *)
   let is_confirmed_unique t owner rdata =
     (* FIXME: O(N) *)
-    match unique_of_key t owner (DP.rdata_to_rr_type rdata) with
-    | Some unique -> unique.confirmed
+    match unique_of_key t owner with
+    | Some state -> state = Confirmed
     | None -> false
 
 
   let prepare_probe t =
-    let questions = ref [] in
-    let authorities = ref [] in
-    let probe_node node =
-      let probe_rrset rrset =
-        match unique_of_rrset t node.DR.owner.H.node rrset.DR.rdata with
-        | Some unique ->
-          if unique.confirmed then begin
-            assert (not unique.probing);
-            false  (* Only probe if not already confirmed *)
-          end else begin
-            unique.probing <- true;
-            (* RFC 6762 section 8.2 - populate the Authority section *)
-            let auth = DP.({name=node.DR.owner.H.node; cls=DP.RR_IN; flush=true; ttl=120l; rdata=unique.rdata}) in
-            authorities := auth :: !authorities;
-            true
-          end
-        | None -> false
-      in
-      (* The probe question specifies Q_ANY_TYP, so we send it if any of the RRs are unique *)
-      let any = List.fold_left (fun any rrset -> probe_rrset rrset || any) false node.DR.rrsets in
-      if any then
-        let q = DP.({
-            q_name = node.DR.owner.H.node;
-            q_type = Q_ANY_TYP;
-            q_class = Q_IN;
-            q_unicast = QU;  (* request unicast response as per RFC 6762 section 8.1 para 6 *)
-          }) in
-        questions := q :: !questions
+    (* Build a list of names that need to be probed *)
+    let names = Hashtbl.fold (
+      fun name state l ->
+        if state <> Confirmed then begin
+(*           printf "prepare_probe: %s\n%!" (Dns.Name.domain_name_to_string name); *)
+          name :: l
+        end else
+          l
+      ) t.unique []
     in
-    Dns.Trie.iter probe_node t.dnstrie;
-    if !questions = [] then
+    (* Mark the names as state Probing *)
+    List.iter (fun name -> Hashtbl.replace t.unique name Probing) names;
+    (* Build a list of questions *)
+    let questions = List.map (fun name -> DP.({
+        q_name = name;
+        q_type = Q_ANY_TYP;
+        q_class = Q_IN;
+        q_unicast = QU;  (* request unicast response as per RFC 6762 section 8.1 para 6 *)
+      })) names
+    in
+    (* Reuse Query.answer_multiple to get the records that we need for the authority section *)
+    let answer = DQ.answer_multiple ~dnssec:false ~mdns:true questions t.dnstrie in
+    let authorities = List.filter (fun answer -> Hashtbl.mem t.unique answer.DP.name) answer.DQ.answer in
+    if authorities = [] then
       (* There are no unique records to probe for *)
       None
     else
-      let detail = DP.({ qr=Query; opcode=Standard; aa=false; tc=false; rd=false; ra=false; rcode=NoError}) in
-      let query = DP.({ id=0; detail; questions= !questions; answers=[]; authorities= !authorities; additionals=[]; }) in
+      (* I don't know whether the cache flush bit needs to be set in the authority RRs, but seems logical *)
+      let authorities = List.map (fun rr -> { rr with DP.flush = true }) authorities in
+      let detail = DP.({ qr=Query; opcode=Standard; aa=false; tc=false; rd=false; ra=false; rcode=NoError; }) in
+      let query = DP.({ id=0; detail; questions; answers=[]; authorities; additionals=[]; }) in
       let obuf = DP.marshal (Transport.alloc ()) query in
       Some obuf
 
@@ -361,13 +341,20 @@ module Make (Transport : TRANSPORT) = struct
     (* Fixed delay of 250 ms *)
     label "probe.d3";
     delay 0.25 >>= fun () ->
-    (* Now confirmed unique *)
-    List.iter (fun (key,unique) ->
-        if unique.probing then begin
-          unique.probing <- false;
-          unique.confirmed <- true
+    (* Build a list of names that have probed successfully *)
+    let names = Hashtbl.fold (
+      fun name state l ->
+        if state = Probing then begin
+(*           printf "Done probing: %s\n%!" (Dns.Name.domain_name_to_string name); *)
+          name :: l
+        end else begin
+(*           printf "NOT done probing: %s\n%!" (Dns.Name.domain_name_to_string name); *)
+          l
         end
-      ) t.unique;
+      ) t.unique []
+    in
+    (* Mark them as confirmed *)
+    List.iter (fun name -> Hashtbl.replace t.unique name Confirmed) names;
     return_unit
 
   let try_probe t =
@@ -509,22 +496,22 @@ module Make (Transport : TRANSPORT) = struct
 
   let process_query t src dst query =
     let check_unique query response =
-      (* First check for conflicts *)
-      List.iter (fun (key, unique) ->
-          (* Ignore records that are not part of the current probe cycle *)
-          if unique.probing then
+      (* A "simultaneous probe conflict" occurs if we see a (probe) request
+         that contains a question matching one of our unique records,
+         and the authority section contains different data. *)
+      (* let unique_qs = List.filter (fun q -> Hashtbl.mem t.unique q.DP.q_name) query.DP.questions in *)
+      let theirs = List.filter (fun rr -> Hashtbl.mem t.unique rr.DP.name) query.DP.authorities in
+      List.iter (fun auth ->
+          let state = Hashtbl.find t.unique auth.DP.name in
+          (* For this step we only care aboue records that are part of the current probe cycle. *)
+          if state = Probing then
             try
-              (* A "simultaneous probe conflict" occurs if we see a (probe) request
-                 that contains a question matching one of our unique records,
-                 and the authority section contains different data. *)
-              let auth = List.find (fun auth -> (auth.DP.name = key.name) && ((DP.rdata_to_rr_type auth.DP.rdata) = key.rrtype)) query.DP.authorities in
-              let _ = List.find (fun q -> q.DP.q_name = key.name) query.DP.questions in
-              let ans = List.find (fun ans -> ans.DP.name = key.name && (DP.rdata_to_rr_type ans.DP.rdata) = key.rrtype) response.DP.answers in
+              let ours = List.find (fun rr -> Hashtbl.mem t.unique rr.DP.name) response.DP.answers in
               (* TODO: proper lexicographical comparison *)
-              let compare = DP.compare_rdata ans.DP.rdata auth.DP.rdata in
+              let compare = DP.compare_rdata ours.DP.rdata auth.DP.rdata in
               if compare < 0 then begin
                 (* Our data is less than the requester's data, so restart the probe sequence *)
-                unique.probing <- false;
+                Hashtbl.replace t.unique auth.DP.name PreProbe;
                 t.probe_tiebreak <- true;
                 probe_restart t
               end
@@ -532,11 +519,11 @@ module Make (Transport : TRANSPORT) = struct
             (* else if compare = 0 then there is no conflict *)
             with
             | Not_found -> ()
-        ) t.unique;
+        ) theirs;
       (* Now filter out answers that are unique but unconfirmed *)
       let answers = List.filter (fun rr ->
-          match unique_of_key t rr.DP.name (DP.rdata_to_rr_type rr.DP.rdata) with
-          | Some unique -> unique.confirmed  (* Exclude if unconfirmed *)
+          match unique_of_key t rr.DP.name with
+          | Some state -> state = Confirmed  (* Exclude if unconfirmed *)
           | None -> true  (* OK, not unique *)
         ) response.DP.answers in
       { response with DP.answers = answers }
@@ -590,7 +577,7 @@ module Make (Transport : TRANSPORT) = struct
         end
 
 
-  let rename_unique t old_key old_value =
+  let rename_unique t old_name state =
     let increment_name name =
       let head = List.hd name in
       let re = Re_str.regexp "\\(.*\\)\\([0-9]+\\)" in
@@ -602,10 +589,8 @@ module Make (Transport : TRANSPORT) = struct
       in
       new_head :: (List.tl name)
     in
-    (* TODO: we only support A records at the moment *)
-    assert (old_key.rrtype = DP.RR_A);
     (* Find the old RR from the trie *)
-    let rrsets = match Dns.Trie.simple_lookup (Dns.Name.canon2key old_key.name) t.dnstrie with
+    let rrsets = match Dns.Trie.simple_lookup (Dns.Name.canon2key old_name) t.dnstrie with
       | None -> failwith "rename_unique: old not not found"
       | Some node ->
         let rrsets = node.DR.rrsets in
@@ -615,42 +600,41 @@ module Make (Transport : TRANSPORT) = struct
         rrsets
     in
     (* Create a new name *)
-    let new_name = increment_name old_key.name in
-    let new_key = { name=new_name; rrtype=old_key.rrtype } in
-    let new_value = { rdata=old_value.rdata; probing=false; confirmed=false } in
+    let new_name = increment_name old_name in
     (* Add the new RR to the trie *)
     (* TODO: Dns.Loader doesn't support a simple rename operation *)
     List.iter (fun rrset -> match rrset.DR.rdata with
         | DR.A l -> List.iter (fun ip -> Dns.Loader.add_a_rr ip rrset.DR.ttl new_name t.db) l
         | _ -> failwith "Only A records are supported") rrsets;
-    (* Remove the old entry from the association list and add the new one *)
-    let l = List.remove_assoc old_key t.unique in
-    t.unique <- (new_key, new_value) :: l
+    (* Remove the old entry from the hash table and add the new one *)
+    Hashtbl.remove t.unique old_name;
+    Hashtbl.replace t.unique new_name state
 
   let process_response t response =
     let conflict_exists l =
-      List.exists (fun (key, unique) ->
-          try
-            let rr = List.find (fun rr -> rr.DP.name = key.name && (DP.rdata_to_rr_type rr.DP.rdata) = key.rrtype) l in
-            (* TODO: proper lexicographical comparison *)
-            let compare = DP.compare_rdata rr.DP.rdata unique.rdata in
-            if compare <> 0 then begin
+      List.exists (fun rr ->
+          let name = rr.DP.name in
+          match unique_of_key t name with
+          | None -> false
+          | Some state ->
+            let exists = List.exists (fun our ->
+                our.DP.name = name && DP.compare_rdata rr.DP.rdata our.DP.rdata = 0
+              ) t.probe_rrs in
+            if not exists then begin
               (* If we are currently probing then we must defer to the existing host *)
               (* In any case we must then re-probe *)
-              if unique.probing then begin
+              if state = Probing then begin
 (*                 printf "Conflict during probe\n"; *)
-                rename_unique t key unique;
-              end; (* else
-                printf "Conflict outside probe\n"; *)
-              unique.probing <- false;
-              unique.confirmed <- false;
+                rename_unique t name PreProbe;
+              end else begin
+(*                 printf "Conflict outside probe\n"; *)
+                Hashtbl.replace t.unique name PreProbe
+              end;
               true
             end else
+              (* if compare = 0 then there is no conflict *)
               false
-          (* else if compare = 0 then there is no conflict *)
-          with
-          | Not_found -> false
-        ) t.unique
+        ) l
     in
     (* Check for conflicts with our unique records *)
     (* RFC 6762 section 9 - need to check all sections *)

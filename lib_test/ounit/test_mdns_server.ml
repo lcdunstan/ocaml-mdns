@@ -326,13 +326,13 @@ let tests =
         let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
         let unique_name_str = "unique.local" in
         let name = string_to_domain_name unique_name_str in
-        Server.add_unique_hostname server unique_name_str unique_ip;
+        Server.add_unique_hostname server name unique_ip;
         begin
           let key = canon2key name in
           match Dns.Trie.simple_lookup key (Server.trie server) with
           | None -> assert_failure "unique.local not found";
           | Some node ->
-            assert_equal ~msg:"owner" ~printer:(fun s -> s) "unique.local" (domain_name_to_string node.DR.owner.H.node);
+            assert_equal ~msg:"owner" ~printer:(fun s -> s) unique_name_str (domain_name_to_string node.DR.owner.H.node);
         end
       );
 
@@ -356,7 +356,8 @@ let tests =
         (* Add a unique hostname *)
         let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
         let unique_str = "unique.local" in
-        Server.add_unique_hostname server unique_str unique_ip;
+        let name = string_to_domain_name unique_str in
+        Server.add_unique_hostname server name unique_ip;
 
         (* Create the probe thread *)
         let probe_thread = Server.first_probe server in
@@ -457,7 +458,8 @@ let tests =
         (* Add a unique hostname *)
         let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
         let unique_str = "unique.local" in
-        Server.add_unique_hostname server unique_str unique_ip;
+        let name = string_to_domain_name unique_str in
+        Server.add_unique_hostname server name unique_ip;
 
         (* Create the probe thread *)
         let _ = Server.first_probe server in
@@ -534,7 +536,8 @@ let tests =
         (* Add a unique hostname *)
         let unique_ip = Ipaddr.V4.of_string_exn "1.2.3.4" in
         let unique_str = "unique.local" in
-        Server.add_unique_hostname server unique_str unique_ip;
+        let name = string_to_domain_name unique_str in
+        Server.add_unique_hostname server name unique_ip;
 
         (* Create the probe thread *)
         let _ = Server.first_probe server in

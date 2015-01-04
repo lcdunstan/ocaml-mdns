@@ -35,7 +35,7 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
       end)
     in
     let server = Server.of_zonebuf zonebuf in
-    Server.add_unique_hostname server "mirage-mdns.local" (S.ipv4 s |> S.IPV4.get_ip |> List.hd);
+    Server.add_unique_hostname server (Dns.Name.string_to_domain_name "mirage-mdns.local") (S.ipv4 s |> S.IPV4.get_ip |> List.hd);
     S.listen_udpv4 s listening_port (
       fun ~src ~dst ~src_port buf ->
         MProf.Trace.label "got udp";

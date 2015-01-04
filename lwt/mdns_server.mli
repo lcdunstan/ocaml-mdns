@@ -28,8 +28,9 @@ module Make : functor (Transport : TRANSPORT) -> sig
 
   val of_zonebufs : string list -> t
   val of_zonebuf : string -> t
+  val of_db : Dns.Loader.db -> t
 
-  val add_unique_hostname : t -> string -> Ipaddr.V4.t -> unit
+  val add_unique_hostname : t -> Dns.Name.domain_name -> Ipaddr.V4.t -> unit
   val first_probe : t -> unit Lwt.t
   val announce : t -> repeat:int -> unit Lwt.t
   val process : t -> src:ip_endpoint -> dst:ip_endpoint -> Dns.Buf.t -> unit Lwt.t
