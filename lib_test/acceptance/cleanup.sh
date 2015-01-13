@@ -1,53 +1,33 @@
 #!/bin/bash
 set -e
 
-function dom_exists {
-    domname=$1
-    if xl domid "$domname" 2> /dev/null ; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-function wait_dom_stop {
-    domname=$1
-    timeout=$2
-    i=0
-    while [ $i -lt $timeout ] ; do
-        if ! dom_exists "$domname" ; then
-            break
-        fi
-        sleep 1
-        echo -n "."
-    done
-    echo
-}
-
-if [ "$USER" != "root" ] ; then
-    echo "This script must be run as root!" >&2
-    exit 1
-fi
-
 . config.sh
+. common.sh
 
-# Destroy the Linux guest
+need_root
+# Destroy the guests
 if dom_exists "$linux_guest_name" ; then
     echo "Shutting down Linux guest $linux_guest_name"
     xl shutdown "$linux_guest_name"
     echo "Waiting..."
-    wait_dom_exit "$linux_guest_name" 20
-
-    echo "Destroying Linux guest $linux_guest_name"
-    xl destroy "$linux_guest_name"
-    echo "Waiting..."
-    wait_dom_stop "$linux_guest_name" 20
+    if ! wait_dom_stop "$linux_guest_name" 20 ; then
+        echo "Destroying Linux guest $linux_guest_name"
+        xl destroy "$linux_guest_name"
+        echo "Waiting..."
+        wait_dom_stop "$linux_guest_name" 20
+    fi
 else
     echo "Linux guest $linux_guest_name doesn't exist"
 fi
+if dom_exists "$mirage_name" ; then
+    echo "Stopping unikernel"
+    xl destroy $mirage_name
+fi
+rm -rf $tmp_here
 
 # Delete the bridge
 if brctl show | grep $bridge > /dev/null ; then
+    echo "Deleting bridge $bridge"
     ip link set dev $bridge down
     brctl delbr $bridge
 else

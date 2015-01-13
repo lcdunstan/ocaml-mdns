@@ -21,3 +21,7 @@ lib_test/mirage/static1.mli
 *.xe
 *.xl
 *.ctf
+*.xen
+*.elf
+__pycache__
+tmp

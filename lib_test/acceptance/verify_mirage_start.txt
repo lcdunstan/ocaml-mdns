@@ -1,0 +1,417 @@
+{
+    'ns': [
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'q': [
+        {
+            'name': 'mirage-mdns.local.',
+            'type': 'ANY',
+            'unicast': 'U',
+        },
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
+{
+    'ns': [
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'q': [
+        {
+            'name': 'mirage-mdns.local.',
+            'type': 'ANY',
+            'unicast': 'U',
+        },
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't+~250ms',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
+{
+    'ns': [
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'q': [
+        {
+            'name': 'mirage-mdns.local.',
+            'type': 'ANY',
+            'unicast': 'U',
+        },
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't+~500ms',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
+{
+    'an': [
+        {
+            'flush': False,
+            'name': 'fake2.local.',
+            'rdata': 'A 127.0.0.95',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake3.local.',
+            'rdata': 'A 127.0.0.96',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake4.local.',
+            'rdata': 'CNAME fake1.local.',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake1.local.',
+            'rdata': 'A 127.0.0.94',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': '_foobar._tcp.local.',
+            'rdata': 'SRV fake1.local.:9 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR tiger._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR dugite._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR king brown._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'SRV fake1.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Notechis scutatus"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'SRV fake2.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudonaja affinis"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'SRV fake3.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudechis australis"',
+            'ttl': 120,
+        },
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'ar': [
+
+    ],
+    'ns': [
+
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
+{
+    'an': [
+        {
+            'flush': False,
+            'name': 'fake2.local.',
+            'rdata': 'A 127.0.0.95',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake3.local.',
+            'rdata': 'A 127.0.0.96',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake4.local.',
+            'rdata': 'CNAME fake1.local.',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake1.local.',
+            'rdata': 'A 127.0.0.94',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': '_foobar._tcp.local.',
+            'rdata': 'SRV fake1.local.:9 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR tiger._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR dugite._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR king brown._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'SRV fake1.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Notechis scutatus"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'SRV fake2.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudonaja affinis"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'SRV fake3.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudechis australis"',
+            'ttl': 120,
+        },
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'ar': [
+
+    ],
+    'ns': [
+
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't+1s',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
+{
+    'an': [
+        {
+            'flush': False,
+            'name': 'fake2.local.',
+            'rdata': 'A 127.0.0.95',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake3.local.',
+            'rdata': 'A 127.0.0.96',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake4.local.',
+            'rdata': 'CNAME fake1.local.',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': 'fake1.local.',
+            'rdata': 'A 127.0.0.94',
+            'ttl': 4500,
+        },
+        {
+            'flush': False,
+            'name': '_foobar._tcp.local.',
+            'rdata': 'SRV fake1.local.:9 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR tiger._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR dugite._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': '_snake._tcp.local.',
+            'rdata': 'PTR king brown._snake._tcp.local.',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'SRV fake1.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'tiger._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Notechis scutatus"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'SRV fake2.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'dugite._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudonaja affinis"',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'SRV fake3.local.:33333 0 0',
+            'ttl': 120,
+        },
+        {
+            'flush': False,
+            'name': 'king brown._snake._tcp.local.',
+            'rdata': 'TXT "txtvers=1" "species=Pseudechis australis"',
+            'ttl': 120,
+        },
+        {
+            'flush': True,
+            'name': 'mirage-mdns.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'ar': [
+
+    ],
+    'ns': [
+
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't+1s',
+        },
+        'src_ip': '192.168.3.3',
+        'src_port': 'mdns',
+    },
+}
