@@ -1,18 +1,25 @@
 #!/bin/bash
 set -e
+set -x
 
+original_pwd=$PWD
 . config.sh
 . common.sh
 need_root
 
-# Generate the XL configuration
 if [ ! -d $tmp_here ] ; then
     mkdir $tmp_here
 fi
+
+echo "Build the unikernel"
+chown $normal_user:$normal_user $tmp_here
+(cd $tmp_here && sudo -u $normal_user ../mbuild.sh)
+
+# Generate the XL configuration
 mirage_xl=$tmp_here/$mirage_name.xl
 cat <<EOF > $mirage_xl
 name = '$mirage_name'
-kernel = '${PWD}/../mirage/mir-mdns-resp-test.xen'
+kernel = '${PWD}/$tmp_here/mir-$mirage_name.xen'
 builder = 'linux'
 memory = 16
 on_crash = 'preserve'
@@ -53,7 +60,7 @@ chown $normal_user:$normal_user $cap_file
 # -ttttt enables relative timestamps
 # udp filters out the ICMP and ARP packets
 cap_txt=$tmp_here/test_mirage_start.txt
-tcpdump -r $cap_file -ttttt -vvv udp > $cap_txt 2> /dev/null
+tcpdump -r $cap_file -ttttt -vvv udp and not ether host $bridge_mac > $cap_txt 2> /dev/null
 chown $normal_user:$normal_user $cap_txt
 
 ./verify_mirage_start.py < $cap_txt > $tmp_here/verify_mirage_start.txt
