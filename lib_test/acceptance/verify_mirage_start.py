@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+#
+# FIXME: need a much simpler way to canonicalise and diff the packet capture
 
 import re
 
@@ -26,11 +28,22 @@ def format_obj(obj, indent=0):
         return repr(obj)
 
 
-IP_HEADER = re.compile(r'^(\d\d):(\d\d):(\d\d\.\d{6}) IP \(tos 0x[0-9a-fA-F]+, ttl \d+, id \d+, offset \d+, flags \[[^\]]+\], proto (\w+) \(\d+\), length \d+\)$')
-UDP = re.compile(r'^    (\d+\.\d+.\d+.\d+)\.(\w+) > (\d+\.\d+.\d+.\d+)\.(\w+): \[([^\]]*)\] (.*) \((\d+)\)$')
-MDNS_Q = re.compile(r'^\d+\+?%? (?:\[(\d+)n\])?(.*)$')
+# Example: 00:00:00.750896 IP (tos 0x0, ttl 38, id 41334, offset 0, flags [none], proto UDP (17), length 473)
+IP_HEADER = re.compile(r'^(\d\d):(\d\d):(\d\d\.\d{6}) IP \(tos 0x[0-9a-fA-F]+, ttl (\d+), id \d+, offset \d+, flags \[[^\]]+\], proto (\w+) \(\d+\), length \d+\)$')
+# Example: 00:00:01.954885 IP6 (hlim 255, next-header UDP (17) payload length: 126) 
+IP6_HEADER = re.compile(r'^(\d\d):(\d\d):(\d\d\.\d{6}) IP6 \(hlim (\d+), next-header (\w+) \(\d+\) payload length: \d+\)(.*)$')
+
+# Example: 192.168.3.3.mdns > 224.0.0.251.mdns: [udp sum ok] 
+UDP = re.compile(r'^(\d+\.\d+.\d+.\d+|[0-9a-f:]+)\.(\w+) > (\d+\.\d+.\d+.\d+|[0-9a-f:]+)\.(\w+): \[([^\]]*)\] (.*) \((\d+)\)$')
+# Example: 0 [1n]
+MDNS_Q = re.compile(r'^\d+\+?%? (?:\[(\d+)q\] )?(?:\[(\d+)n\])?(.*)$')
+# Example: ANY (QU)? mirage-mdns.local.
+QSTART = re.compile(r'(\w+) \(Q([MU])\)\? ')
 QUESTION = re.compile(r'(\w+) \(Q([MU])\)\? (.*)$')
-RR = re.compile(r'^((?:[-_ A-Za-z0-9]+\.)+) (\(Cache flush\) )?\[(\d+h)?(\d+m)\] (.*)$')
+# Example: _snake._tcp.local. [2m] PTR king brown._snake._tcp.local.
+# Tough example: cubieboard2 [12:df:d4:08:83:ac]._workstation._tcp.local. [2m] SRV cubieboard2.local.:9 0 0
+RR = re.compile(r'^((?:[-_ A-Za-z0-9:\[\]]+\.)+) (\(Cache flush\) )?\[(\d+h)?(\d+m)\] (.*)$')
+# Example: 0*- [0q] 15/0/0 
 MDNS_R = re.compile(r'^\d+\*?-?\|?\$? (?:\[(\d+)q\]) (\d+)/(\d+)/(\d+) (.*)$')
 
 
@@ -44,10 +57,15 @@ def get_packet():
     header = get_line()
     m = IP_HEADER.match(header)
     if m:
-        hh, mm, ss, protocol = m.groups()
+        hh, mm, ss, ttl, protocol = m.groups()
         t = float(ss) + 60 * (int(mm) + 60 * int(hh))
         body = get_line()
-        return Object(t=t, protocol=protocol), body
+        return Object(t=t, v=4, ttl=ttl, protocol=protocol), body.strip()
+    else:
+        m = IP6_HEADER.match(header)
+        hh, mm, ss, ttl, protocol, body = m.groups()
+        t = float(ss) + 60 * (int(mm) + 60 * int(hh))
+        return Object(t=t, v=6, ttl=ttl, protocol=protocol), body.strip()
 
 
 def get_udp():
@@ -126,8 +144,15 @@ def get_dns():
         m = MDNS_Q.match(payload)
         if not m:
             raise ParseException('Error parsing DNS query {0}'.format(repr(payload)))
-        numq, rest = m.groups()
-        numq = int(numq)
+        numq, numn, rest = m.groups()
+        if numq is None:
+            numq = 1
+        else:
+            numq = int(numq)
+        if numn is None:
+            numn = 0
+        else:
+            numn = int(numn)
         i_end = len(rest)
         q_part = rest
         ns_part = ''
@@ -142,8 +167,20 @@ def get_dns():
             q_part = q_part[:i_ns]
 
         qlist = []
-        for q in q_part.split(','):
-            m = QUESTION.match(q.strip())
+        q_part = q_part.strip()
+        while q_part:
+            m = QSTART.match(q_part)
+            if not m:
+                raise ParseException('Error parsing DNS question {0}'.format(repr(q)))
+            n = QSTART.search(q_part, m.end())
+            if n:
+                q = q_part[:n.start()]
+                q_part = q_part[n.start():]
+            else:
+                q = q_part
+                q_part = ''
+            print(q)
+            m = QUESTION.match(q)
             if not m:
                 raise ParseException('Error parsing DNS question {0}'.format(repr(q)))
             qlist.append(Object(type=m.group(1), unicast=m.group(2), name=m.group(3)))
