@@ -124,17 +124,16 @@ EOF
 }
 
 function start_unikernel {
-    local index=$1
-    local dom_name=${mirage_name}${index}
-    local dom_tmp=$tmp_here/$dom_name
-    local dom_mac=${mirage_mac_array[$index]}
-    local dom_ipaddr=${mirage_ipaddr_array[$index]}
-    local dom_xl=$tmp_here/${dom_name}.xl
-
-    echo "Starting ${dom_name}"
-    xl create $dom_xl
-    # Wait for it to respond to pings
-    wait_ping $dom_ipaddr 10
+    for index in "$@" ; do
+        local dom_name=${mirage_name}${index}
+        local dom_xl=$tmp_here/${dom_name}.xl
+        echo "Starting ${dom_name}"
+        xl create $dom_xl
+    done
+    for index in "$@" ; do
+        local dom_ipaddr=${mirage_ipaddr_array[$index]}
+        wait_ping $dom_ipaddr 10
+    done
 }
 
 function stop_unikernel {

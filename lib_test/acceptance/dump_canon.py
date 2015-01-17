@@ -138,7 +138,7 @@ def get_dns():
             for rr in ar_part.split(','):
                 arlist.append(get_rr(rr))
 
-        return Object(udp=udp, an=anlist, ns=nslist, ar=arlist)
+        return Object(udp=udp, qr='response', an=anlist, ns=nslist, ar=arlist)
     else:
         # Must be an mDNS query
         m = MDNS_Q.match(payload)
@@ -188,7 +188,7 @@ def get_dns():
         nslist = []
         for rr in ns_part.split(','):
             nslist.append(get_rr(rr))
-        return Object(udp=udp, q=qlist, ns=nslist)
+        return Object(udp=udp, qr='query', q=qlist, ns=nslist)
 
 
 def get_mdns():

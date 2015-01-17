@@ -6,6 +6,7 @@ from dump_canon import *
 def main():
     conflicting_probe = get_mdns()
     response = get_mdns()
+    # The response should not have been delayed
     verify_delay(conflicting_probe.udp.packet, response.udp.packet, 0.0, 0.1)
     conflicting_probe.udp.packet.t = 't1'
     response.udp.packet.t = 't1+~0ms'
