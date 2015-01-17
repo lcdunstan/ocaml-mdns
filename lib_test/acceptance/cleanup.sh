@@ -3,8 +3,8 @@ set -e
 
 . config.sh
 . common.sh
-
 need_root
+
 # Destroy the guests
 if dom_exists "$linux_guest_name" ; then
     echo "Shutting down Linux guest $linux_guest_name"
@@ -17,13 +17,18 @@ if dom_exists "$linux_guest_name" ; then
         wait_dom_stop "$linux_guest_name" 20
     fi
 else
-    echo "Linux guest $linux_guest_name doesn't exist"
+    echo "Linux guest $linux_guest_name doesn't exist; nothing to destroy"
 fi
-if dom_exists "$mirage_name" ; then
-    echo "Stopping unikernel"
-    xl destroy $mirage_name
-fi
-rm -rf $tmp_here
+
+for index in ${mirage_index_array[*]} ; do
+    dom_name=${mirage_name}${index}
+    if dom_exists "$dom_name" ; then
+        echo "Destroying: ${dom_name}"
+        xl destroy $dom_name
+    else
+        echo "Nothing to destroy: ${dom_name}"
+    fi
+done
 
 # Delete the bridge
 if brctl show | grep $bridge > /dev/null ; then
@@ -34,3 +39,4 @@ else
     echo "Bridge $bridge doesn't exist"
 fi
 
+rm -rf $tmp_here

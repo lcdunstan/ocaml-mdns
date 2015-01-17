@@ -1,3 +1,6 @@
+ANY (QU)? mirage-mdns.local.
+ANY (QU)? mirage-mdns.local.
+ANY (QU)? mirage-mdns.local.
 {
     'ns': [
         {
@@ -21,6 +24,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
@@ -49,6 +54,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't+~250ms',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
@@ -77,6 +84,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't+~500ms',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
@@ -188,6 +197,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
@@ -299,6 +310,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't+1s',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
@@ -410,6 +423,8 @@
         'packet': {
             'protocol': 'UDP',
             't': 't+1s',
+            'ttl': '38',
+            'v': 4,
         },
         'src_ip': '192.168.3.3',
         'src_port': 'mdns',
