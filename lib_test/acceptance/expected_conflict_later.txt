@@ -1,18 +1,15 @@
-ANY (QU)? mirage-mdns.local.
-ANY (QU)? mirage-mdns.local.
-ANY (QU)? mirage-mdns.local.
 {
     'ns': [
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
     'q': [
         {
-            'name': 'mirage-mdns.local.',
+            'name': 'name-conflict.local.',
             'type': 'ANY',
             'unicast': 'U',
         },
@@ -23,7 +20,36 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't',
+            't': 't1',
+            'ttl': '38',
+            'v': 4,
+        },
+        'src_ip': '192.168.3.4',
+        'src_port': 'mdns',
+    },
+}
+{
+    'an': [
+        {
+            'flush': True,
+            'name': 'name-conflict.local.',
+            'rdata': 'A 192.168.3.3',
+            'ttl': 120,
+        },
+    ],
+    'ar': [
+
+    ],
+    'ns': [
+
+    ],
+    'udp': {
+        'dest_ip': '192.168.3.4',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't1+~0ms',
             'ttl': '38',
             'v': 4,
         },
@@ -35,14 +61,14 @@ ANY (QU)? mirage-mdns.local.
     'ns': [
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
     'q': [
         {
-            'name': 'mirage-mdns.local.',
+            'name': 'name-conflict2.local.',
             'type': 'ANY',
             'unicast': 'U',
         },
@@ -53,11 +79,11 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't+~250ms',
+            't': 't2',
             'ttl': '38',
             'v': 4,
         },
-        'src_ip': '192.168.3.3',
+        'src_ip': '192.168.3.4',
         'src_port': 'mdns',
     },
 }
@@ -65,14 +91,14 @@ ANY (QU)? mirage-mdns.local.
     'ns': [
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
     'q': [
         {
-            'name': 'mirage-mdns.local.',
+            'name': 'name-conflict2.local.',
             'type': 'ANY',
             'unicast': 'U',
         },
@@ -83,11 +109,41 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't+~500ms',
+            't': 't2+~250ms',
             'ttl': '38',
             'v': 4,
         },
-        'src_ip': '192.168.3.3',
+        'src_ip': '192.168.3.4',
+        'src_port': 'mdns',
+    },
+}
+{
+    'ns': [
+        {
+            'flush': True,
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
+            'ttl': 120,
+        },
+    ],
+    'q': [
+        {
+            'name': 'name-conflict2.local.',
+            'type': 'ANY',
+            'unicast': 'U',
+        },
+    ],
+    'udp': {
+        'dest_ip': '224.0.0.251',
+        'dest_port': 'mdns',
+        'length': '<9000',
+        'packet': {
+            'protocol': 'UDP',
+            't': 't2+~500ms',
+            'ttl': '38',
+            'v': 4,
+        },
+        'src_ip': '192.168.3.4',
         'src_port': 'mdns',
     },
 }
@@ -179,8 +235,8 @@ ANY (QU)? mirage-mdns.local.
         },
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
@@ -196,11 +252,11 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't',
+            't': 't3',
             'ttl': '38',
             'v': 4,
         },
-        'src_ip': '192.168.3.3',
+        'src_ip': '192.168.3.4',
         'src_port': 'mdns',
     },
 }
@@ -292,8 +348,8 @@ ANY (QU)? mirage-mdns.local.
         },
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
@@ -309,11 +365,11 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't+1s',
+            't': 't3+1s',
             'ttl': '38',
             'v': 4,
         },
-        'src_ip': '192.168.3.3',
+        'src_ip': '192.168.3.4',
         'src_port': 'mdns',
     },
 }
@@ -405,8 +461,8 @@ ANY (QU)? mirage-mdns.local.
         },
         {
             'flush': True,
-            'name': 'mirage-mdns.local.',
-            'rdata': 'A 192.168.3.3',
+            'name': 'name-conflict2.local.',
+            'rdata': 'A 192.168.3.4',
             'ttl': 120,
         },
     ],
@@ -422,11 +478,11 @@ ANY (QU)? mirage-mdns.local.
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't+1s',
+            't': 't3+1s',
             'ttl': '38',
             'v': 4,
         },
-        'src_ip': '192.168.3.3',
+        'src_ip': '192.168.3.4',
         'src_port': 'mdns',
     },
 }

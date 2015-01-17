@@ -179,7 +179,6 @@ def get_dns():
             else:
                 q = q_part
                 q_part = ''
-            print(q)
             m = QUESTION.match(q)
             if not m:
                 raise ParseException('Error parsing DNS question {0}'.format(repr(q)))
@@ -205,32 +204,3 @@ def verify_delay(p1, p2, min_delay, max_delay):
     delay = p2.t - p1.t
     assert delay >= min_delay and delay <= max_delay, \
         'delay {0} not in [{1}, {2}]'.format(delay, min_delay, max_delay)
-
-
-def main():
-    probe1 = get_mdns()
-    probe2 = get_mdns()
-    probe3 = get_mdns()
-    verify_delay(probe1.udp.packet, probe2.udp.packet, 0.2, 0.3)
-    verify_delay(probe2.udp.packet, probe3.udp.packet, 0.2, 0.3)
-    probe1.udp.packet.t = 't'
-    probe2.udp.packet.t = 't+~250ms'
-    probe3.udp.packet.t = 't+~500ms'
-    print(format_obj(probe1))
-    print(format_obj(probe2))
-    print(format_obj(probe3))
-
-    ann1 = get_mdns()
-    ann2 = get_mdns()
-    ann3 = get_mdns()
-    verify_delay(ann1.udp.packet, ann2.udp.packet, 0.9, 1.1)
-    verify_delay(ann2.udp.packet, ann3.udp.packet, 1.9, 2.1)
-    ann1.udp.packet.t = 't'
-    ann2.udp.packet.t = 't+1s'
-    ann3.udp.packet.t = 't+1s'
-    print(format_obj(ann1))
-    print(format_obj(ann2))
-    print(format_obj(ann3))
-
-if __name__ == '__main__':
-    main()

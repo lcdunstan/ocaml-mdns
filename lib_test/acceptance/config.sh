@@ -17,7 +17,7 @@ linux_guest_mac=${mac_prefix}:02
 linux_guest_ipaddr=${ip_prefix}.2
 
 mirage_index_array=(0 1 2)
-mirage_zone_file=../mirage/data/test.zone
+mirage_zone_file=test.zone
 mirage_name=mirage-guest
 mirage_mac_array=(${mac_prefix}:03 ${mac_prefix}:04 ${mac_prefix}:05)
 mirage_ipaddr_array=(${ip_prefix}.3 ${ip_prefix}.4 ${ip_prefix}.5)
