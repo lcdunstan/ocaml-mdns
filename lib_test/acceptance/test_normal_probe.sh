@@ -7,7 +7,7 @@ need_root
 
 test_name=test_normal_probe
 
-create_unikernel 0 mirage-mdns
+create_unikernel 0 mirage-mdns.local
 start_capture ${test_name}
 start_unikernel 0
 echo "Delaying for probe and announce"

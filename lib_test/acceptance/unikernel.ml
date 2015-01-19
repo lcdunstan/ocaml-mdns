@@ -29,8 +29,12 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         let sleep t = OS.Time.sleep t
       end)
     in
+    let cmd_line = OS.Start_info.((get ()).cmd_line) in
+    printf "cmd_line: %s\n%!" cmd_line;
+    let main_ip = S.ipv4 s |> S.IPV4.get_ip |> List.hd in
+    let hostnames = Str.split (Str.regexp " ") cmd_line in
     let server = Server.of_zonebuf zonebuf in
-    Server.add_unique_hostname server (Dns.Name.string_to_domain_name "mirage-mdns.local") (S.ipv4 s |> S.IPV4.get_ip |> List.hd);
+    List.iter (fun hostname -> Server.add_unique_hostname server (Dns.Name.string_to_domain_name hostname) main_ip) hostnames;
     S.listen_udpv4 s mdns_port (
       fun ~src ~dst ~src_port buf ->
         MProf.Trace.label "got udp";

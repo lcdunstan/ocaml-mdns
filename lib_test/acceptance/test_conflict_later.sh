@@ -7,8 +7,8 @@ need_root
 
 test_name=test_conflict_later
 
-create_unikernel 0 name-conflict
-create_unikernel 1 name-conflict
+create_unikernel 0 name-conflict.local
+create_unikernel 1 name-conflict.local
 
 start_unikernel 0
 echo "Delaying for probe completion..."

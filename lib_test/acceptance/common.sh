@@ -100,12 +100,12 @@ let main =
   foreign "Unikernel.Main" (console @-> kv_ro @-> stackv4 @-> job)
 
 let () =
-  add_to_ocamlfind_libraries [ "mdns.lwt-core"; ];
+  add_to_ocamlfind_libraries [ "mdns.lwt-core"; "str"; ];
   register "${dom_name}" [ main $ default_console $ data $ stack ]
 
 EOF
-    # Create unikernel.ml
-    sed -e "s/mirage-mdns/${dom_hostname}/" unikernel.ml > $dom_tmp/unikernel.ml
+    # Copy unikernel.ml
+    cp unikernel.ml $dom_tmp/unikernel.ml
     # Build it
     # Requires a separate script for eval `opam config env`
     (cd $dom_tmp && sudo -u $normal_user ../../mbuild.sh > mbuild.log 2>&1)
@@ -114,6 +114,7 @@ EOF
     cat <<EOF > $dom_xl
 name = '${dom_name}'
 kernel = '${PWD}/$dom_tmp/${dom_kernel}'
+extra = '${dom_hostname}'
 builder = 'linux'
 memory = 16
 on_crash = 'preserve'
