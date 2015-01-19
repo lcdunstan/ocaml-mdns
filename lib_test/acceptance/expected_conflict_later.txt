@@ -14,6 +14,7 @@
             'unicast': 'U',
         },
     ],
+    'qr': 'query',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
@@ -43,6 +44,7 @@
     'ns': [
 
     ],
+    'qr': 'response',
     'udp': {
         'dest_ip': '192.168.3.4',
         'dest_port': 'mdns',
@@ -73,6 +75,7 @@
             'unicast': 'U',
         },
     ],
+    'qr': 'query',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
@@ -103,6 +106,7 @@
             'unicast': 'U',
         },
     ],
+    'qr': 'query',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
@@ -133,6 +137,7 @@
             'unicast': 'U',
         },
     ],
+    'qr': 'query',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
@@ -246,6 +251,7 @@
     'ns': [
 
     ],
+    'qr': 'response',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
@@ -359,13 +365,14 @@
     'ns': [
 
     ],
+    'qr': 'response',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't3+1s',
+            't': 't3+~1s',
             'ttl': '38',
             'v': 4,
         },
@@ -472,13 +479,14 @@
     'ns': [
 
     ],
+    'qr': 'response',
     'udp': {
         'dest_ip': '224.0.0.251',
         'dest_port': 'mdns',
         'length': '<9000',
         'packet': {
             'protocol': 'UDP',
-            't': 't3+1s',
+            't': 't3+~2s',
             'ttl': '38',
             'v': 4,
         },
