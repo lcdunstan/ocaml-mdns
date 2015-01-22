@@ -1,3 +1,12 @@
+#!/bin/bash
+
+function flush_cache {
+    # Make sure Avahi is not caching old records between tests
+    echo "Resetting the bridge"
+    ip link set $bridge down
+    sleep 1
+    ip link set $bridge up
+}
 
 function dom_exists {
     local domname=$1
@@ -174,6 +183,34 @@ function dump_capture {
     # Filter out the dom0 packets.
     tcpdump -r $capture_pcap -ttttt -vvv udp and not ether host $bridge_mac > $capture_txt 2> /dev/null
     chown_user $capture_txt
+}
+
+function verify_hostname {
+    local hostname=$1
+    local ipaddr=$2
+    echo "Verifying that ${hostname} resolve to IP address $ipaddr"
+    local expected=`echo -e "${hostname}\t${ipaddr}"`
+    local actual=`avahi-resolve-host-name -4 ${hostname} 2>&1`
+    if [ "$actual" == "$expected" ] ; then
+        return 0
+    else
+        echo "Mismatch! Actual: $actual"
+        return 1
+    fi
+}
+
+function verify_hostname_error {
+    local hostname=$1
+    local ipaddr=$2
+    echo "Verifying that ${hostname} fails to resolve"
+    local expected="Failed to resolve host name '${hostname}': Timeout reached"
+    local actual=`avahi-resolve-host-name -4 ${hostname} 2>&1`
+    if [ "$actual" == "$expected" ] ; then
+        return 0
+    else
+        echo "Mismatch! Actual: $actual"
+        return 1
+    fi
 }
 
 # This is required to allow the script to be interrupted

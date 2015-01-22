@@ -15,7 +15,7 @@ echo "Creating bridge"
 brctl addbr $bridge
 ip link set $bridge address $bridge_mac
 ip addr add $bridge_ipaddr/24 dev $bridge
-ip link set dev $bridge up
+ip link set $bridge up
 
 #echo "Wait for dom0 to finish mDNS probe/announce"
 #tcpdump -q -i $bridge &

@@ -9,6 +9,7 @@ which avahi-resolve-host-name >/dev/null || apt-get install avahi-utils -y
 
 test_name=test_normal_probe
 
+flush_cache
 create_unikernel 0 mirage-mdns.local
 start_capture ${test_name}
 start_unikernel 0
@@ -17,20 +18,8 @@ sleep 10
 stop_capture ${test_name}
 
 echo
-echo "Lookup of valid name:"
-expected_lookup=`echo -e "mirage-mdns.local\t${mirage_ipaddr_array[0]}"`
-echo "Expected: $expected_lookup"
-name_lookup=`avahi-resolve-host-name -4 mirage-mdns.local 2>&1`
-echo "Actual: $name_lookup"
-[ "$name_lookup" = "$expected_lookup" ]
-
-echo
-echo "Lookup of invalid name:"
-expected_lookup="Failed to resolve host name 'mirage-mdns-bad.local': Timeout reached"
-echo "Expected: $expected_lookup"
-name_lookup=`avahi-resolve-host-name -4 mirage-mdns-bad.local 2>&1`
-echo "Actual: $name_lookup"
-[ "$name_lookup" = "$expected_lookup" ]
+verify_hostname mirage-mdns.local ${mirage_ipaddr_array[0]}
+verify_hostname_error mirage-mdns-bad.local
 
 echo
 echo "Querying valid service:"
