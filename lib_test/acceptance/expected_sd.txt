@@ -1,0 +1,3 @@
++;brtest;IPv4;king\032brown;_snake._tcp;local
++;brtest;IPv4;dugite;_snake._tcp;local
++;brtest;IPv4;tiger;_snake._tcp;local
