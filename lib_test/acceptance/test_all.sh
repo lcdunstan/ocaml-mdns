@@ -46,13 +46,21 @@ function run_test {
     else
         echo "Failed"
         : $(( count_fail++ ))
-        cat $tmp_here/${test_name}.out
-        cleanup
+        echo "*** Begin $test_name output ***" >> test_all.err
+        cat $tmp_here/${test_name}.out >> test_all.err
+        echo "*** End $test_name output ***" >> test_all.err
+        echo >> test_all.err
+        destroy_guests
+        delete_bridge
         setup
     fi
 
     # Clear the avahi
 }
+
+if [ -f test_all.err ] ; then
+    rm test_all.err
+fi
 
 cleanup
 setup
@@ -63,5 +71,4 @@ run_test test_conflict_simultaneous
 
 echo
 echo "*** Summary: ${count_fail} failures out of ${count_total} tests total"
-#./cleanup.sh
 
