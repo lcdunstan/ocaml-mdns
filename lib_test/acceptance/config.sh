@@ -14,6 +14,7 @@ linux_guest_name=test-linux-guest
 linux_guest_hostname=${linux_guest_name}
 linux_guest_kernel=/root/dom0_kernel
 linux_guest_lv=${linux_guest_name}
+linux_guest_snapshot=snap-linux-guest
 linux_guest_mac=${mac_prefix}:02
 linux_guest_ipaddr=${ip_prefix}.2
 

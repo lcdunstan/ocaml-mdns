@@ -44,7 +44,7 @@ function run_test {
     if ./${test_name}.sh > $tmp_here/${test_name}.out 2>&1 ; then
         echo "OK"
     else
-        echo "Failed"
+        echo "Failed (see test_all.err)"
         : $(( count_fail++ ))
         echo "*** Begin $test_name output ***" >> test_all.err
         cat $tmp_here/${test_name}.out >> test_all.err
@@ -54,8 +54,6 @@ function run_test {
         delete_bridge
         setup
     fi
-
-    # Clear the avahi
 }
 
 if [ -f test_all.err ] ; then

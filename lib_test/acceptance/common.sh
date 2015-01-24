@@ -177,15 +177,51 @@ function stop_unikernel {
 function create_linux_guest {
     need_bridge
 
+    if [ ! -d $tmp_here ] ; then
+        mkdir $tmp_here
+    fi
     if xl domid "$linux_guest_name" > /dev/null 2>&1 ; then
         echo "Linux guest $linux_guest_name already exists!" >&2
         exit 1
     fi
+    if mount | grep "${linux_guest_snapshot}" > /dev/null ; then
+        echo "Unmounting old snapshot"
+        umount "/dev/vg0/${linux_guest_snapshot}"
+    fi
+    if lvs "vg0/${linux_guest_snapshot}" > /dev/null 2>&1 ; then
+        echo "Deleting old snapshot"
+        lvremove -f "vg0/${linux_guest_snapshot}"
+    fi
+    lvs "vg0/${linux_guest_lv}" > /dev/null 2>&1 || {
+        echo "Linux guest logical volume vg0/${linux_guest_lv} doesn't exist!"
+        echo "Create it using build-linux-guest.sh"
+        return 1
+    }
+
+    echo "Creating volume snapshot..."
+    lvcreate --size 100M --snapshot "vg0/${linux_guest_lv}" --name "${linux_guest_snapshot}"
+    echo "Mounting the snapshot"
+    local tmp_mnt=$tmp_here/mnt
+    if [ ! -d $tmp_mnt ] ; then
+        mkdir -p $tmp_mnt
+    fi
+    mount /dev/vg0/${linux_guest_snapshot} $tmp_mnt
+
+    echo "Setting the hostname..."
+    echo ${linux_guest_hostname} > $tmp_mnt/etc/hostname
+
+    echo "Configuring the static IP address..."
+    cat <<EOF > $tmp_mnt/etc/network/interfaces
+auto eth0
+iface eth0 inet static
+    address ${linux_guest_ipaddr}
+    netmask 255.255.255.0
+EOF
+
+    echo "Unmounting the snapshot"
+    umount $tmp_mnt
 
     # Generate the Linux guest configuration
-    if [ ! -d $tmp_here ] ; then
-        mkdir $tmp_here
-    fi
     local dom_xl=$tmp_here/linux_guest.xl
     cat <<EOF > $dom_xl
 kernel = '${linux_guest_kernel}'
@@ -193,7 +229,7 @@ memory = 256
 name = '${linux_guest_name}'
 #vcpus = 2
 serial = 'pty'
-disk = [ 'phy:/dev/vg0/${linux_guest_lv},xvda,w' ]
+disk = [ 'phy:/dev/vg0/${linux_guest_snapshot},xvda,w' ]
 vif = ['bridge=${bridge},mac=${linux_guest_mac}' ]
 extra = 'console=hvc0 xencons=tty root=/dev/xvda'
 EOF
@@ -208,8 +244,7 @@ function start_linux_guest {
     wait_ping $linux_guest_ipaddr 60
 }
 
-function destroy_guests {
-    # Destroy the guests
+function stop_linux_guest {
     if dom_exists "$linux_guest_name" ; then
         echo "Shutting down Linux guest $linux_guest_name"
         xl shutdown "$linux_guest_name"
@@ -224,6 +259,18 @@ function destroy_guests {
         echo "Linux guest $linux_guest_name doesn't exist; nothing to destroy"
     fi
 
+    if mount | grep "${linux_guest_snapshot}" > /dev/null ; then
+        echo "Unmounting snapshot"
+        umount "/dev/vg0/${linux_guest_snapshot}"
+    fi
+    if lvs "vg0/${linux_guest_snapshot}" > /dev/null 2>&1 ; then
+        echo "Deleting snapshot"
+        lvremove -f "vg0/${linux_guest_snapshot}"
+    fi
+}
+
+function destroy_guests {
+    stop_linux_guest
     for index in ${mirage_index_array[*]} ; do
         local dom_name=${mirage_name}${index}
         if dom_exists "$dom_name" ; then

@@ -20,6 +20,12 @@ vgs vg0 > /dev/null 2>&1 || {
     echo "vgcreate vg0 /dev/mmcblk0p3"
     exit 1
 }
+lvs vg0/${linux_guest_lv} > /dev/null 2>&1 && {
+    echo "Logical volume vg0/${linux_guest_lv} already exists!"
+    echo "Use:"
+    echo "lvremove vg0/${linux_guest_lv}"
+    exit 1
+}
 
 echo "Creating guest logical volume..."
 lvcreate -L 4G vg0 --name ${linux_guest_lv}
@@ -35,11 +41,10 @@ debootstrap --arch armhf trusty /mnt
 echo "Setting hostname..."
 echo ${linux_guest_hostname} > /mnt/etc/hostname
 
-echo "Configuring static IP address..."
+echo "Configuring DHCP IP address..."
 cat <<EOF > /mnt/etc/network/interfaces
-iface eth0 inet static
-    address ${linux_guest_ipaddr}
-    netmask 255.255.255.0
+auto eth0
+iface eth0 inet dhcp
 EOF
 
 echo "Adding mirage user"
