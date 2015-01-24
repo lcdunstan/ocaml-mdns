@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 eval `opam config env`
 mirage clean

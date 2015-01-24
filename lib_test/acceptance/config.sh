@@ -10,9 +10,10 @@ bridge=brtest
 bridge_mac=${mac_prefix}:01
 bridge_ipaddr=${ip_prefix}.1
 
-linux_guest_name=ubuntu-guest
+linux_guest_name=test-linux-gust
+linux_guest_hostname=${linux_guest_name}
 linux_guest_kernel=/root/dom0_kernel
-: ${linux_guest_disk:=/dev/vg0/linux-guest}
+linux_guest_lv=${linux_guest_name}
 linux_guest_mac=${mac_prefix}:02
 linux_guest_ipaddr=${ip_prefix}.2
 
@@ -24,3 +25,7 @@ mirage_ipaddr_array=(${ip_prefix}.3 ${ip_prefix}.4 ${ip_prefix}.5)
 # Convenience only:
 mirage_mac=${mirage_mac_array[0]}
 mirage_ipaddr=${mirage_ipaddr_array[0]}
+
+if [ -f local-config.sh ] ; then
+    . local-config.sh
+fi

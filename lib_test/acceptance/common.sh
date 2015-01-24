@@ -61,6 +61,18 @@ function chown_user {
     chown $normal_user:$normal_user "$@"
 }
 
+function need_bridge {
+    if brctl show | grep $bridge > /dev/null ; then
+        return 0
+    fi
+
+    echo "Creating bridge"
+    brctl addbr $bridge
+    ip link set $bridge address $bridge_mac
+    ip addr add $bridge_ipaddr/24 dev $bridge
+    ip link set $bridge up
+}
+
 function create_unikernel {
     local index=$1
     local dom_hostname=${2-mirage-mdns}
@@ -72,8 +84,7 @@ function create_unikernel {
     local dom_data=$dom_tmp/data
     local dom_xl=$tmp_here/${dom_name}.xl
 
-    brctl show | grep $bridge > /dev/null || ./setup.sh
-
+    need_bridge
     echo "Building ${dom_name}"
     if [ ! -d $tmp_here ] ; then
         mkdir $tmp_here
@@ -153,6 +164,40 @@ function stop_unikernel {
     xl destroy $dom_name
 }
 
+function create_linux_guest {
+    need_bridge
+
+    if xl domid "$linux_guest_name" > /dev/null 2>&1 ; then
+        echo "Linux guest $linux_guest_name already exists!" >&2
+        exit 1
+    fi
+
+    # Generate the Linux guest configuration
+    if [ ! -d $tmp_here ] ; then
+        mkdir $tmp_here
+    fi
+    local dom_xl=$tmp_here/linux_guest.xl
+    cat <<EOF > $dom_xl
+kernel = '${linux_guest_kernel}'
+memory = 256
+name = '${linux_guest_name}'
+#vcpus = 2
+serial = 'pty'
+disk = [ 'phy:/dev/vg0/${linux_guest_lv},xvda,w' ]
+vif = ['bridge=${bridge},mac=${linux_guest_mac}' ]
+extra = 'console=hvc0 xencons=tty root=/dev/xvda'
+EOF
+    chown_user $dom_xl
+}
+
+function start_linux_guest {
+    local dom_xl=$tmp_here/linux_guest.xl
+
+    echo "Starting ${linux_guest_name}"
+    xl create $dom_xl
+    wait_ping $linux_guest_ipaddr 60
+}
+
 function start_capture {
     local test_name=$1
     local capture_pcap=$tmp_here/${test_name}.pcap
@@ -160,6 +205,7 @@ function start_capture {
         rm $capture_pcap
     fi
     echo "Starting packet capture"
+    need_bridge
     tcpdump -q -i $bridge -w $capture_pcap > /dev/null 2>&1 &
     declare -g last_capture_pid=$!
 }
@@ -201,7 +247,6 @@ function verify_hostname {
 
 function verify_hostname_error {
     local hostname=$1
-    local ipaddr=$2
     echo "Verifying that ${hostname} fails to resolve"
     local expected="Failed to resolve host name '${hostname}': Timeout reached"
     local actual=`avahi-resolve-host-name -4 ${hostname} 2>&1`

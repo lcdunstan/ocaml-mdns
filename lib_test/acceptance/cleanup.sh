@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 . config.sh
 . common.sh
