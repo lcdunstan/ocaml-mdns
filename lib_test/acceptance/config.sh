@@ -10,7 +10,7 @@ bridge=brtest
 bridge_mac=${mac_prefix}:01
 bridge_ipaddr=${ip_prefix}.1
 
-linux_guest_name=test-linux-gust
+linux_guest_name=test-linux-guest
 linux_guest_hostname=${linux_guest_name}
 linux_guest_kernel=/root/dom0_kernel
 linux_guest_lv=${linux_guest_name}
