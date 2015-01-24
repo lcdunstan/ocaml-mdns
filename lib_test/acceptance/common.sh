@@ -307,6 +307,7 @@ function dump_capture {
     local test_name=$1
     local capture_pcap=$tmp_here/${test_name}.pcap
     declare -g capture_txt=$tmp_here/${test_name}.txt
+    [ -f "$capture_pcap" ] || echo "Not found: $capture_pcap"
     # Convert the pcap to text
     # -ttttt enables relative timestamps
     # Filter out the ICMP and ARP packets.

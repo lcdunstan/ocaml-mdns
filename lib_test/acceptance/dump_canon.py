@@ -73,7 +73,7 @@ def get_udp():
     if packet and packet.protocol == 'UDP':
         m = UDP.match(body)
         src_ip, src_port, dest_ip, dest_port, ok, payload, length = m.groups()
-        assert ok == 'udp sum ok'
+        # FIXME (offload?): assert ok == 'udp sum ok'
         return Object(packet=packet, src_ip=src_ip, src_port=src_port, dest_ip=dest_ip, dest_port=dest_port, length=int(length)), payload
 
 
