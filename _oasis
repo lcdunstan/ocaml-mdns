@@ -54,15 +54,15 @@ Library "mdns-lwt-core"
 #  XMetaRequires: lwt.unix, cstruct.lwt, mdns, mdns.lwt-core, ipaddr.unix
 #  FindlibParent: mdns
 
-#Library "mdns-mirage"
-#  Path: mirage
-#  Build$: flag(mirage)
-#  Install$: flag(mirage)
-#  Findlibname: mirage
-#  Modules: Mdns_resolver_mirage
-#  BuildDepends: cstruct, lwt.syntax, mdns, mdns.lwt-core, mirage-types, io-page
-#  XMetaRequires: cstruct, mdns, mdns.lwt-core, tcpip, mirage-types, io-page
-#  FindlibParent: mdns
+Library "mdns-mirage"
+  Path: mirage
+  Build$: flag(mirage)
+  Install$: flag(mirage)
+  Findlibname: mirage
+  Modules: Mdns_resolver_mirage
+  BuildDepends: cstruct, lwt.syntax, mdns, mdns.lwt-core, mirage-types, dns.mirage, dns.lwt-core
+  XMetaRequires: cstruct, mdns, mdns.lwt-core, tcpip, mirage-types, dns.mirage, dns.lwt-core
+  FindlibParent: mdns
 
 #Library "mdns-async"
 #  Path: async

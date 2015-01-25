@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9ecf75daa944068ae29ab6bedf2e27bb)
+# DO NOT EDIT (digest: a78b87dcc3586fb65c2d969388b57366)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -37,6 +37,23 @@ true: annot, bin_annot
 <lwt/*.ml{,i,y}>: pkg_re
 <lwt/*.ml{,i,y}>: pkg_re.str
 <lwt/*.ml{,i,y}>: use_mdns
+# Library mdns-mirage
+"mirage/mdns-mirage.cmxs": use_mdns-mirage
+<mirage/*.ml{,i,y}>: pkg_base64
+<mirage/*.ml{,i,y}>: pkg_cstruct
+<mirage/*.ml{,i,y}>: pkg_cstruct.syntax
+<mirage/*.ml{,i,y}>: pkg_dns
+<mirage/*.ml{,i,y}>: pkg_dns.lwt-core
+<mirage/*.ml{,i,y}>: pkg_dns.mirage
+<mirage/*.ml{,i,y}>: pkg_ipaddr
+<mirage/*.ml{,i,y}>: pkg_lwt
+<mirage/*.ml{,i,y}>: pkg_lwt.syntax
+<mirage/*.ml{,i,y}>: pkg_mirage-profile
+<mirage/*.ml{,i,y}>: pkg_mirage-types
+<mirage/*.ml{,i,y}>: pkg_re
+<mirage/*.ml{,i,y}>: pkg_re.str
+<mirage/*.ml{,i,y}>: use_mdns
+<mirage/*.ml{,i,y}>: use_mdns-lwt-core
 # Executable mdns_resolve
 "lib_test/unix/mdns_resolve.byte": pkg_dns
 "lib_test/unix/mdns_resolve.byte": pkg_dns.lwt

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3ad0c88bb844a8fba2795e701ed907a0)
+# DO NOT EDIT (digest: 4a9fd51959dbca597388dda0f8f520a0)
 version = "0.0.1"
 description = "Multicast DNS responder and resolver in OCaml"
 requires = "cstruct re re.str ipaddr base64 dns"
@@ -8,6 +8,18 @@ archive(byte, plugin) = "mdns.cma"
 archive(native) = "mdns.cmxa"
 archive(native, plugin) = "mdns.cmxs"
 exists_if = "mdns.cma"
+package "mirage" (
+ version = "0.0.1"
+ description = "Multicast DNS responder and resolver in OCaml"
+ requires =
+ "cstruct mdns mdns.lwt-core tcpip mirage-types dns.mirage dns.lwt-core"
+ archive(byte) = "mdns-mirage.cma"
+ archive(byte, plugin) = "mdns-mirage.cma"
+ archive(native) = "mdns-mirage.cmxa"
+ archive(native, plugin) = "mdns-mirage.cmxs"
+ exists_if = "mdns-mirage.cma"
+)
+
 package "lwt-core" (
  version = "0.0.1"
  description = "Multicast DNS responder and resolver in OCaml"
