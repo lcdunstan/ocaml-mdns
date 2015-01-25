@@ -5,9 +5,9 @@
 - [x] Write a small responder for mDNS shared records only
 - [x] Test a minimal responder with a unique A record
 - [x] Implement announcements
+- [x] Investigate automated acceptance tests
 - [ ] Implement/Test IPv6
 - [ ] Implement the proper simultaneous probe tiebreaking rules
-- [ ] Investigate automated acceptance tests
 - [ ] Create a resolver that can use both DNS and mDNS
 - [ ] Create a DNS-SD resolver (continuous query)
 
