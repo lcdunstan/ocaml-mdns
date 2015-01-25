@@ -8,7 +8,7 @@ need_root
 test_name=test_conflict_avahi
 
 flush_cache
-create_unikernel 0 ${linux_guest_hostname}.local
+create_unikernel 0 -h ${linux_guest_hostname}.local
 create_linux_guest
 
 # In the first phase, the Linux guest is started first

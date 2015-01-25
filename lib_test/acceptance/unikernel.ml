@@ -4,12 +4,17 @@ open Printf
 
 let mdns_port = 5353
 
+let red fmt    = sprintf ("\027[31m"^^fmt^^"\027[m")
+let green fmt  = sprintf ("\027[32m"^^fmt^^"\027[m")
+let yellow fmt = sprintf ("\027[33m"^^fmt^^"\027[m")
+let blue fmt   = sprintf ("\027[36m"^^fmt^^"\027[m")
+
 module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
 
   module U = S.UDPV4
 
-  let start c k s =
-    MProf.Trace.label "mDNS test";
+  let start_responder c k s hostnames =
+    MProf.Trace.label "start_responder";
     lwt zonebuf =
       K.size k "test.zone"
       >>= function
@@ -29,10 +34,7 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         let sleep t = OS.Time.sleep t
       end)
     in
-    let cmd_line = OS.Start_info.((get ()).cmd_line) in
-    printf "cmd_line: %s\n%!" cmd_line;
     let main_ip = S.ipv4 s |> S.IPV4.get_ip |> List.hd in
-    let hostnames = Str.split (Str.regexp " ") cmd_line in
     let server = Server.of_zonebuf zonebuf in
     List.iter (fun hostname -> Server.add_unique_hostname server (Dns.Name.string_to_domain_name hostname) main_ip) hostnames;
     S.listen_udpv4 s mdns_port (
@@ -47,6 +49,58 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
         Server.first_probe server >>= fun () ->
         Server.announce server ~repeat:3
       );
+      S.listen s;
+    ]
+
+  let start_resolver c s domains =
+    MProf.Trace.label "start_resolver";
+    let module D = Mdns_resolver_mirage.Make(OS.Time)(S) in
+    let t = D.create s in
+    C.log_s c "Started, will begin resolving shortly..." >>= fun () ->
+    OS.Time.sleep 2.0 >>= fun () ->
+    Lwt_list.iter_s (fun domain ->
+      C.log_s c (green "Resolving %s" domain)
+      >>= fun () ->
+      D.gethostbyname t domain
+      >>= fun rl ->
+      Lwt_list.iter_s
+        (fun r ->
+           C.log_s c (yellow "  => %s" (Ipaddr.to_string r))
+        ) rl
+      >>= fun () ->
+      OS.Time.sleep 1.0
+      ) domains
+
+  let start c k s =
+    let cmd_line =
+      (* "-h abc.local -r foo.local -h def.local" *)
+      OS.Start_info.((get ()).cmd_line)
+    in
+    C.log_s c (sprintf "cmd_line: %s\n%!" cmd_line) >>= fun () ->
+    let args = Str.split (Str.regexp " ") cmd_line in
+    let hostnames =
+      let rec parse args acc =
+        match args with
+        | "-h" :: hostname :: tl -> hostname :: parse tl acc
+        | hd :: tl -> parse tl acc
+        | [] -> acc
+      in
+      parse args []
+    in
+    let domains =
+      let rec parse args acc =
+        match args with
+        | "-r" :: hostname :: tl -> hostname :: parse tl acc
+        | hd :: tl -> parse tl acc
+        | [] -> acc
+      in
+      parse args []
+    in
+    C.log_s c (sprintf "hostnames: %s\n%!" (String.concat ", " hostnames)) >>= fun () ->
+    C.log_s c (sprintf "domains: %s\n%!" (String.concat ", " domains)) >>= fun () ->
+    join [
+      start_responder c k s hostnames;
+      start_resolver c s domains;
       S.listen s;
     ]
 end

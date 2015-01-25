@@ -8,8 +8,8 @@ need_root
 test_name=test_conflict_later
 
 flush_cache
-create_unikernel 0 name-conflict.local
-create_unikernel 1 name-conflict.local
+create_unikernel 0 -h name-conflict.local
+create_unikernel 1 -h name-conflict.local
 
 start_unikernel 0
 echo "Delaying for probe completion..."

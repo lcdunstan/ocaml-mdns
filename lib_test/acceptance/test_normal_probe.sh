@@ -10,7 +10,7 @@ which avahi-resolve-host-name >/dev/null || apt-get install avahi-utils -y
 test_name=test_normal_probe
 
 flush_cache
-create_unikernel 0 mirage-mdns.local
+create_unikernel 0 -h mirage-mdns.local
 start_capture ${test_name}
 start_unikernel 0
 echo "Delaying for probe and announce"

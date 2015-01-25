@@ -85,7 +85,8 @@ function delete_bridge {
 
 function create_unikernel {
     local index=$1
-    local dom_hostname=${2-mirage-mdns}
+    shift
+    local dom_cmdline="$*"
     local dom_name=${mirage_name}${index}
     local dom_tmp=$tmp_here/$dom_name
     local dom_kernel=mir-${dom_name}.xen
@@ -144,7 +145,7 @@ EOF
     cat <<EOF > $dom_xl
 name = '${dom_name}'
 kernel = '${PWD}/$dom_tmp/${dom_kernel}'
-extra = '${dom_hostname}'
+extra = '${dom_cmdline}'
 builder = 'linux'
 memory = 16
 on_crash = 'preserve'
@@ -170,6 +171,11 @@ function start_unikernel {
 function stop_unikernel {
     local index=$1
     local dom_name=${mirage_name}${index}
+    local dom_tmp=$tmp_here/$dom_name
+    local dom_log=$dom_tmp/console.log
+
+    echo "Saving console log to ${dom_log}"
+    xl console $dom_name < /dev/null > $dom_log
     echo "Destroying ${dom_name}"
     xl destroy $dom_name
 }
