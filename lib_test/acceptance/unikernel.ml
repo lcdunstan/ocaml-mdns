@@ -4,11 +4,6 @@ open Printf
 
 let mdns_port = 5353
 
-let red fmt    = sprintf ("\027[31m"^^fmt^^"\027[m")
-let green fmt  = sprintf ("\027[32m"^^fmt^^"\027[m")
-let yellow fmt = sprintf ("\027[33m"^^fmt^^"\027[m")
-let blue fmt   = sprintf ("\027[36m"^^fmt^^"\027[m")
-
 module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
 
   module U = S.UDPV4
@@ -59,14 +54,22 @@ module Main (C:CONSOLE) (K:KV_RO) (S:STACKV4) = struct
     C.log_s c "Started, will begin resolving shortly..." >>= fun () ->
     OS.Time.sleep 2.0 >>= fun () ->
     Lwt_list.iter_s (fun domain ->
-      C.log_s c (green "Resolving %s" domain)
+      C.log_s c (sprintf "Begin: gethostbyname %s" domain)
       >>= fun () ->
-      D.gethostbyname t domain
-      >>= fun rl ->
-      Lwt_list.iter_s
-        (fun r ->
-           C.log_s c (yellow "  => %s" (Ipaddr.to_string r))
-        ) rl
+      begin
+        try_lwt
+          D.gethostbyname t domain
+          >>= fun rl ->
+          printf "#rl: %d" (List.length rl);
+          Lwt_list.iter_s (fun r ->
+              C.log_s c (sprintf "Success: gethostbyname %s => %s" domain (Ipaddr.to_string r))
+            ) rl
+        with
+        | Failure msg ->
+          C.log_s c (sprintf "Failure: gethostbyname %s => %s" domain msg)
+        | exn ->
+          C.log_s c (sprintf "Failure: gethostbyname %s => exn" domain)
+      end
       >>= fun () ->
       OS.Time.sleep 1.0
       ) domains
