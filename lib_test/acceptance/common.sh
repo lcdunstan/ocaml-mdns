@@ -131,7 +131,7 @@ let main =
   foreign "Unikernel.Main" (console @-> kv_ro @-> stackv4 @-> job)
 
 let () =
-  add_to_ocamlfind_libraries [ "mdns.lwt-core"; "str"; ];
+  add_to_ocamlfind_libraries [ "mdns.mirage"; "str"; ];
   register "${dom_name}" [ main $ default_console $ data $ stack ]
 
 EOF
