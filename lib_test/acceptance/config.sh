@@ -30,3 +30,10 @@ mirage_ipaddr=${mirage_ipaddr_array[0]}
 if [ -f local-config.sh ] ; then
     . local-config.sh
 fi
+
+readonly tmp_here normal_user mac_prefix ip_prefix
+readonly bridge bridge_mac bridge_ipaddr
+readonly linux_guest_name linux_guest_hostname linux_guest_lv linux_guest_snapshot linux_guest_mac linux_guest_ipaddr
+readonly -a mirage_index_array mirage_mac_array mirage_ipaddr_array
+readonly mirage_zone_file mirage_name mirage_mac mirage_ipaddr
+
