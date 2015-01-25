@@ -1,5 +1,9 @@
 #!/bin/bash
 
+declare -g last_capture_pid
+declare -g capture_txt
+#declare -g -a mirage_logcon_array
+
 function flush_cache {
     # Make sure Avahi is not caching old records between tests
     echo "Resetting the bridge"
@@ -163,6 +167,13 @@ function start_unikernel {
         xl create $dom_xl
     done
     for index in "$@" ; do
+        local dom_name=${mirage_name}${index}
+        local dom_tmp=$tmp_here/$dom_name
+        echo "Logging console to $dom_tmp/console.log"
+        ./logcon.py ${dom_name} $dom_tmp/console.log &
+        # Looks like we don't need to track the PID of logcon.py
+        # because it exits when the domain is destroyed.
+        #mirage_logcon_array[$index]=$!
         local dom_ipaddr=${mirage_ipaddr_array[$index]}
         wait_ping $dom_ipaddr 10
     done
@@ -171,11 +182,7 @@ function start_unikernel {
 function stop_unikernel {
     local index=$1
     local dom_name=${mirage_name}${index}
-    local dom_tmp=$tmp_here/$dom_name
-    local dom_log=$dom_tmp/console.log
 
-    echo "Saving console log to ${dom_log}"
-    xl console $dom_name < /dev/null > $dom_log
     echo "Destroying ${dom_name}"
     xl destroy $dom_name
 }
@@ -247,6 +254,8 @@ function start_linux_guest {
 
     echo "Starting ${linux_guest_name}"
     xl create $dom_xl
+    echo "Logging console to $tmp_here/linux_guest_console.log"
+    ./logcon.py ${linux_guest_name} $tmp_here/linux_guest_console.log &
     wait_ping $linux_guest_ipaddr 60
 }
 
@@ -350,10 +359,16 @@ function verify_hostname_error {
 }
 
 # This is required to allow the script to be interrupted
-control_c()
-{
+function control_c {
     echo -en "\n*** Interrupted ***\n"
     exit $?
 }
 trap control_c SIGINT
+
+# Kill background jobs when exiting for any reason
+function kill_jobs {
+    local job_pids=$(jobs -pr)
+    [ -n "$job_pids" ] && kill $job_pids
+}
+trap kill_jobs EXIT
 
