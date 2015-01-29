@@ -272,7 +272,7 @@ module Make (Transport : TRANSPORT) = struct
         q_name = name;
         q_type = Q_ANY_TYP;
         q_class = Q_IN;
-        q_unicast = QU;  (* request unicast response as per RFC 6762 section 8.1 para 6 *)
+        q_unicast = Q_mDNS_Unicast;  (* request unicast response as per RFC 6762 section 8.1 para 6 *)
       })) names
     in
     (* Reuse Query.answer_multiple to get the records that we need for the authority section *)
@@ -423,7 +423,7 @@ module Make (Transport : TRANSPORT) = struct
         q_name = node.DR.owner.H.node;
         q_type = Q_ANY_TYP;
         q_class = Q_IN;
-        q_unicast = QM;
+        q_unicast = Q_Normal;
       }) in
       questions := q :: !questions
     in
@@ -552,7 +552,7 @@ module Make (Transport : TRANSPORT) = struct
         if legacy then
           false
         else
-          List.fold_left (fun all_unicast q -> all_unicast && (q.DP.q_unicast = DP.QU)) true query.DP.questions
+          List.fold_left (fun all_unicast q -> all_unicast && (q.DP.q_unicast = DP.Q_mDNS_Unicast)) true query.DP.questions
       in
       let reply_host = if legacy || unicast then src_host else multicast_ip in
       let reply_port = src_port in

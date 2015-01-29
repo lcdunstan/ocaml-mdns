@@ -182,7 +182,7 @@ let tests =
         assert_equal ~msg:"q_name" "mirage1.local" (domain_name_to_string q.q_name);
         assert_equal ~msg:"q_type" Q_A q.q_type;
         assert_equal ~msg:"q_class" Q_IN q.q_class;
-        assert_equal ~msg:"q_unicast" QM q.q_unicast;
+        assert_equal ~msg:"q_unicast" Q_Normal q.q_unicast;
 
         let a = List.hd packet.answers in
         assert_equal ~msg:"name" "mirage1.local" (domain_name_to_string a.name);
@@ -566,7 +566,7 @@ let tests =
         (* The received data is lexicographically greater and therefore we lose *)
         let conflict_src_ip = Ipaddr.V4.of_string_exn "10.0.0.3" in
         let unique_name = string_to_domain_name unique_str in
-        let question = { q_name=unique_name; q_type=Q_ANY_TYP; q_class=Q_IN; q_unicast=QU } in
+        let question = { q_name=unique_name; q_type=Q_ANY_TYP; q_class=Q_IN; q_unicast=Q_mDNS_Unicast } in
         let auth = { name=unique_name; cls=RR_IN; flush=true; ttl=120l; rdata=A conflict_src_ip } in
         let query = {
           id=0;
