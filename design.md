@@ -188,10 +188,12 @@ Changes to ocaml-dns
     - Increment the refresh counter
 - Optional: combine multiple questions into one query (5.3)
 - Platform-specific code defines the commfn record containing txfn, rxfn, timerfn and cleanfn
-- Call Dns.Packet.create to build a query packet
+- Dns_resolver.resolve calls get_id, which would need to return zero
+- Call Dns.Query.create to build a query packet
   - Include "known answers"
 - Dns_resolver.resolve calls send_pkt to do the work and catches any exceptions
 - send_pkt calls Dns.Protocol.Client.marshal to get the bytes for the query
+  - Returned context = whole packet
 - A Lwt.wait pair is created for synchronisation
 - Two threads are created in parallel: send and receive
   - The send thread calls txfn (e.g. sendto) to send the message, then sleeps for 5 seconds
