@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: a78b87dcc3586fb65c2d969388b57366)
+# DO NOT EDIT (digest: 5502c493a42a6ae488b39f127f72b8c8)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -73,11 +73,15 @@ true: annot, bin_annot
 <lib_test/ounit/test.{native,byte}>: pkg_cstruct
 <lib_test/ounit/test.{native,byte}>: pkg_cstruct.syntax
 <lib_test/ounit/test.{native,byte}>: pkg_dns
+<lib_test/ounit/test.{native,byte}>: pkg_dns.lwt-core
+<lib_test/ounit/test.{native,byte}>: pkg_dns.mirage
+<lib_test/ounit/test.{native,byte}>: pkg_io-page.unix
 <lib_test/ounit/test.{native,byte}>: pkg_ipaddr
 <lib_test/ounit/test.{native,byte}>: pkg_lwt
 <lib_test/ounit/test.{native,byte}>: pkg_lwt.syntax
 <lib_test/ounit/test.{native,byte}>: pkg_lwt.unix
 <lib_test/ounit/test.{native,byte}>: pkg_mirage-profile
+<lib_test/ounit/test.{native,byte}>: pkg_mirage-types
 <lib_test/ounit/test.{native,byte}>: pkg_oUnit
 <lib_test/ounit/test.{native,byte}>: pkg_pcap-format
 <lib_test/ounit/test.{native,byte}>: pkg_re
@@ -85,15 +89,20 @@ true: annot, bin_annot
 <lib_test/ounit/test.{native,byte}>: pkg_unix
 <lib_test/ounit/test.{native,byte}>: use_mdns
 <lib_test/ounit/test.{native,byte}>: use_mdns-lwt-core
+<lib_test/ounit/test.{native,byte}>: use_mdns-mirage
 <lib_test/ounit/*.ml{,i,y}>: pkg_base64
 <lib_test/ounit/*.ml{,i,y}>: pkg_cstruct
 <lib_test/ounit/*.ml{,i,y}>: pkg_cstruct.syntax
 <lib_test/ounit/*.ml{,i,y}>: pkg_dns
+<lib_test/ounit/*.ml{,i,y}>: pkg_dns.lwt-core
+<lib_test/ounit/*.ml{,i,y}>: pkg_dns.mirage
+<lib_test/ounit/*.ml{,i,y}>: pkg_io-page.unix
 <lib_test/ounit/*.ml{,i,y}>: pkg_ipaddr
 <lib_test/ounit/*.ml{,i,y}>: pkg_lwt
 <lib_test/ounit/*.ml{,i,y}>: pkg_lwt.syntax
 <lib_test/ounit/*.ml{,i,y}>: pkg_lwt.unix
 <lib_test/ounit/*.ml{,i,y}>: pkg_mirage-profile
+<lib_test/ounit/*.ml{,i,y}>: pkg_mirage-types
 <lib_test/ounit/*.ml{,i,y}>: pkg_oUnit
 <lib_test/ounit/*.ml{,i,y}>: pkg_pcap-format
 <lib_test/ounit/*.ml{,i,y}>: pkg_re
@@ -101,5 +110,6 @@ true: annot, bin_annot
 <lib_test/ounit/*.ml{,i,y}>: pkg_unix
 <lib_test/ounit/*.ml{,i,y}>: use_mdns
 <lib_test/ounit/*.ml{,i,y}>: use_mdns-lwt-core
+<lib_test/ounit/*.ml{,i,y}>: use_mdns-mirage
 <lib_test/ounit/test.{native,byte}>: custom
 # OASIS_STOP

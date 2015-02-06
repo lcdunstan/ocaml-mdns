@@ -90,7 +90,7 @@ Executable test
   Custom:             true
   CompiledObject:     best
   Install:            false
-  BuildDepends:       lwt.unix (>= 2.4.1), mdns.lwt-core, unix, oUnit, pcap-format
+  BuildDepends:       lwt.unix (>= 2.4.1), mdns.lwt-core, unix, oUnit, pcap-format, mdns.mirage, io-page.unix
 
 Test test
   Run$:               flag(tests)
