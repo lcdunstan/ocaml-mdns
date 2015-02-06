@@ -71,20 +71,20 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
   let alloc () = Io_page.get 1
 
   let resolve client
-      s server dns_port
+      t server dns_port
       (q_class:DP.q_class) (q_type:DP.q_type)
       (q_name:domain_name) =
-    let commfn = connect_to_resolver s (server,dns_port) in
+    let commfn = connect_to_resolver t (server,dns_port) in
     resolve ~alloc client commfn q_class q_type q_name
 
   let gethostbyname
-      s ?(server = default_ns) ?(dns_port = default_port)
+      t ?(server = default_ns) ?(dns_port = default_port)
       ?(q_class:DP.q_class = DP.Q_IN) ?(q_type:DP.q_type = DP.Q_A)
       name =
     (* TODO: duplicates Dns_resolver.gethostbyname *)
     let open DP in
     let domain = string_to_domain_name name in
-    resolve (module Mdns.Protocol.Client) s server dns_port q_class q_type domain
+    resolve (module Mdns.Protocol.Client) t server dns_port q_class q_type domain
     >|= fun r ->
     List.fold_left (fun a x ->
         match x.rdata with
@@ -95,13 +95,13 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
     |> List.rev
 
   let gethostbyaddr
-      s ?(server = default_ns) ?(dns_port = default_port)
+      t ?(server = default_ns) ?(dns_port = default_port)
       ?(q_class:DP.q_class = DP.Q_IN) ?(q_type:DP.q_type = DP.Q_PTR)
       addr =
     (* TODO: duplicates Dns_resolver.gethostbyaddr *)
     let addr = for_reverse addr in
     let open DP in
-    resolve (module Mdns.Protocol.Client) s server dns_port q_class q_type addr
+    resolve (module Mdns.Protocol.Client) t server dns_port q_class q_type addr
     >|= fun r ->
     List.fold_left (fun a x ->
         match x.rdata with |PTR n -> (domain_name_to_string n)::a |_->a
