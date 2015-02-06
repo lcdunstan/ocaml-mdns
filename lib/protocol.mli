@@ -19,62 +19,10 @@ open Dns
 exception Mdns_resolve_timeout
 exception Mdns_resolve_error of exn list
 
-(** The type of pluggable DNS resolver modules for request contexts and
-    custom metadata and wire protocols.
-*)
-module type CLIENT = sig
-  type context
-
-  val get_id : unit -> int
-
-  (** [marshal query] is a list of context-buffer pairs corresponding to the
-      channel contexts and request buffers with which to attempt DNS requests.
-      Requests are made in parallel and the first response to successfully
-      parse is returned as the answer. Lagging requests are kept running until
-      successful parse or timeout. With this behavior, it is easy to construct
-      low-latency but network-environment-aware DNS resolvers.
-  *)
-  val marshal : ?alloc:(unit -> Buf.t) -> Packet.t -> (context * Buf.t) list
-
-  (** [parse ctxt buf] is the potential packet extracted out of [buf]
-      with [ctxt]
-  *)
-  val parse : context -> Buf.t -> Packet.t option
-
-  (** [timeout ctxt] is the exception resulting from a context [ctxt] that has
-      timed-out
-  *)
-  val timeout : context -> exn
-end
-
 (** The default DNS resolver using the standard DNS protocol *)
-module Client : CLIENT
-
-(** The type of pluggable DNS server modules for request contexts and
-    custom metadata dn wire protocols.
-*)
-module type SERVER = sig
-  type context
-
-  (** Projects a context into its associated query *)
-  val query_of_context : context -> Packet.t
-
-  (** DNS wire format parser function.
-      @param buf message buffer
-      @return parsed packet and context
-  *)
-  val parse   : Buf.t -> context option
-
-  (** DNS wire format marshal function.
-      @param buf output resource
-      @param _q context
-      @param response answer packet
-      @return buffer to write
-  *)
-  val marshal : Buf.t -> context -> Packet.t -> Buf.t option
-end
+module Client : Dns.Protocol.CLIENT
 
 (** The default DNS server using the standard DNS protocol *)
-module Server : SERVER with type context = Packet.t
+module Server : Dns.Protocol.SERVER with type context = Packet.t
 
 val contain_exc : string -> (unit -> 'a) -> 'a option

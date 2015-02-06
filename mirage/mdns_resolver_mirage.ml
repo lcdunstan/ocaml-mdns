@@ -52,6 +52,7 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
       let source_port = default_port in
       let callback ~src ~dst ~src_port buf = Lwt_mvar.put mvar buf in
       let cleanfn () = return () in
+      (* FIXME: can't coexist with server yet because both listen on port 5353 *)
       S.listen_udpv4 s ~port:source_port callback;
       let rec txfn buf =
         Cstruct.of_bigarray buf |>
@@ -80,14 +81,31 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
       s ?(server = default_ns) ?(dns_port = default_port)
       ?(q_class:DP.q_class = DP.Q_IN) ?(q_type:DP.q_type = DP.Q_A)
       name =
-    let commfn = connect_to_resolver s (server,dns_port) in
-    gethostbyname ~alloc ~q_class ~q_type commfn name
+    (* TODO: duplicates Dns_resolver.gethostbyname *)
+    let open DP in
+    let domain = string_to_domain_name name in
+    resolve (module Mdns.Protocol.Client) s server dns_port q_class q_type domain
+    >|= fun r ->
+    List.fold_left (fun a x ->
+        match x.rdata with
+        | A ip -> Ipaddr.V4 ip :: a
+        | AAAA ip -> Ipaddr.V6 ip :: a
+        | _ -> a
+      ) [] r.answers
+    |> List.rev
 
   let gethostbyaddr
       s ?(server = default_ns) ?(dns_port = default_port)
       ?(q_class:DP.q_class = DP.Q_IN) ?(q_type:DP.q_type = DP.Q_PTR)
       addr =
-    let commfn = connect_to_resolver s (server,dns_port) in
-    gethostbyaddr ~alloc ~q_class ~q_type commfn addr
+    (* TODO: duplicates Dns_resolver.gethostbyaddr *)
+    let addr = for_reverse addr in
+    let open DP in
+    resolve (module Mdns.Protocol.Client) s server dns_port q_class q_type addr
+    >|= fun r ->
+    List.fold_left (fun a x ->
+        match x.rdata with |PTR n -> (domain_name_to_string n)::a |_->a
+      ) [] r.answers
+    |> List.rev
 
 end

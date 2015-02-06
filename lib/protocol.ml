@@ -19,24 +19,10 @@ open Dns
 exception Mdns_resolve_timeout
 exception Mdns_resolve_error of exn list
 
-module type CLIENT = sig
-  type context
-
-  val get_id : unit -> int
-
-  val marshal : ?alloc:(unit -> Buf.t) -> Packet.t -> (context * Buf.t) list
-  val parse : context -> Buf.t -> Packet.t option
-
-  val timeout : context -> exn
-end
-
-module Client : CLIENT = struct
+module Client : Dns.Protocol.CLIENT = struct
   type context = int
 
-  (* TODO: XXX FIXME SECURITY EXPLOIT HELP: random enough? *)
-  let get_id () =
-    Random.self_init ();
-    Random.int (1 lsl 16)
+  let get_id () = 0
 
   let marshal ?alloc q =
     [q.Packet.id, Packet.marshal (Buf.create ?alloc 4096) q]
@@ -48,16 +34,6 @@ module Client : CLIENT = struct
   let timeout _id = Mdns_resolve_timeout
 end
 
-module type SERVER = sig
-  type context
-
-  val query_of_context : context -> Packet.t
-
-  val parse   : Buf.t -> context option
-  val marshal : Buf.t -> context -> Packet.t -> Buf.t option
-
-end
-
 let contain_exc l v =
   try
     Some (v ())
@@ -66,7 +42,7 @@ let contain_exc l v =
     Printf.eprintf "mdns %s exn: %s\n%!" l (Printexc.to_string exn);
     None
 
-module Server : SERVER with type context = Packet.t = struct
+module Server : Dns.Protocol.SERVER with type context = Packet.t = struct
   type context = Packet.t
 
   let query_of_context x = x
