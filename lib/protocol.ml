@@ -16,22 +16,41 @@
 
 open Dns
 
-exception Mdns_resolve_timeout
-exception Mdns_resolve_error of exn list
-
 module Client : Dns.Protocol.CLIENT = struct
-  type context = int
+  type context = Packet.t
 
   let get_id () = 0
 
   let marshal ?alloc q =
-    [q.Packet.id, Packet.marshal (Buf.create ?alloc 4096) q]
+    [q, Packet.marshal (Buf.create ?alloc 4096) q]
 
-  let parse id buf =
+  let packet_matches query packet =
+    let open Packet in
+    let rr_answers_question q rr =
+      q.q_name = rr.name &&
+      q_type_matches_rr_type q.q_type (rdata_to_rr_type rr.rdata) &&
+      q.q_class = Q_IN && rr.cls = RR_IN
+    in
+    let rec rrlist_answers_question q rrlist =
+      match rrlist with
+      | [] -> false
+      | rr :: tl -> rr_answers_question q rr || rrlist_answers_question q tl
+    in
+    let rec rrlist_answers_questions qs rrlist =
+      match qs with
+      | [] -> false
+      | q :: tl -> rrlist_answers_question q rrlist || rrlist_answers_questions tl rrlist
+    in
+    packet.detail.qr = Response &&
+      packet.detail.opcode = Standard &&
+      packet.detail.rcode = NoError &&
+      rrlist_answers_questions query.questions packet.answers
+
+  let parse q buf =
     let pkt = Packet.parse buf in
-    if pkt.Packet.id = id then Some pkt else None
+    if packet_matches q pkt then Some pkt else None
 
-  let timeout _id = Mdns_resolve_timeout
+  let timeout _id = Dns.Protocol.Dns_resolve_timeout
 end
 
 let contain_exc l v =

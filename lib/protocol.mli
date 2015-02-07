@@ -16,9 +16,6 @@
 
 open Dns
 
-exception Mdns_resolve_timeout
-exception Mdns_resolve_error of exn list
-
 (** The default DNS resolver using the standard DNS protocol *)
 module Client : Dns.Protocol.CLIENT
 

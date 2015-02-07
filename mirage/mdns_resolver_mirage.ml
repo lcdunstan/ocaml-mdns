@@ -50,7 +50,14 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
       let timerfn () = Time.sleep 5.0 in
       let mvar = Lwt_mvar.create_empty () in
       let source_port = default_port in
-      let callback ~src ~dst ~src_port buf = Lwt_mvar.put mvar buf in
+      let callback ~src ~dst ~src_port buf =
+        (* TODO: ignore responses that are not from the local link *)
+        (* Ignore responses that are not from port 5353 *)
+        if src_port == dest_port then
+          Lwt_mvar.put mvar buf
+        else
+          return_unit
+      in
       let cleanfn () = return () in
       (* FIXME: can't coexist with server yet because both listen on port 5353 *)
       S.listen_udpv4 s ~port:source_port callback;
@@ -70,12 +77,24 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
 
   let alloc () = Io_page.get 1
 
+  let create_packet q_class q_type q_name =
+    let open Dns.Packet in
+    let detail = {
+      qr=Query; opcode=Standard;
+      aa=false; tc=false; rd=false; ra=false; rcode=NoError;
+    } in
+    let question = { q_name; q_type; q_class; q_unicast=Q_Normal } in
+    { id=0; detail; questions=[question];
+      answers=[]; authorities=[]; additionals=[];
+    }
+
   let resolve client
       t server dns_port
       (q_class:DP.q_class) (q_type:DP.q_type)
       (q_name:domain_name) =
     let commfn = connect_to_resolver t (server,dns_port) in
-    resolve ~alloc client commfn q_class q_type q_name
+    let q = create_packet q_class q_type q_name in
+    resolve_pkt ~alloc client commfn q
 
   let gethostbyname
       t ?(server = default_ns) ?(dns_port = default_port)

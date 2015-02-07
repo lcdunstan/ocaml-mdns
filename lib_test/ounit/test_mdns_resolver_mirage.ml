@@ -2,6 +2,14 @@
 open OUnit2
 open Printf
 open Lwt
+open Dns.Packet
+
+let run_timeout thread =
+  Lwt_main.run (
+    Lwt.pick [
+      (Lwt_unix.sleep 1.0 >>= fun () -> return []);
+      thread
+    ])
 
 module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
   type error = [
@@ -124,7 +132,14 @@ module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
 end
 
 
-module MockUdpv4 : V1_LWT.UDPV4 with type ip = StubIpv4.t = struct
+type write_call = {
+  src_port : int;
+  dest_ip : Ipaddr.V4.t;
+  dest_port : int;
+  buf : Cstruct.t;
+}
+
+module MockUdpv4 (*: V1_LWT.UDPV4 with type ip = StubIpv4.t*) = struct
   type 'a io = 'a Lwt.t
   type buffer = Cstruct.t
   type ip = StubIpv4.t
@@ -138,54 +153,36 @@ module MockUdpv4 : V1_LWT.UDPV4 with type ip = StubIpv4.t = struct
 
   type t = {
     ip : ip;
+    mutable writes : write_call list;
   }
 
   let id {ip} = ip
 
-  (* FIXME: [t] is not taken into account at all? *)
-  let input ~listeners _t ~src ~dst buf =
-    (*
-    let dst_port = Wire_structs.get_udpv4_dest_port buf in
-    let data =
-      Cstruct.sub buf Wire_structs.sizeof_udpv4
-        (Wire_structs.get_udpv4_length buf - Wire_structs.sizeof_udpv4)
-    in
-    match listeners ~dst_port with
-    | None -> return_unit
-    | Some fn ->
-      let src_port = Wire_structs.get_udpv4_source_port buf in
-      fn ~src ~dst ~src_port data
-    *)
-    return_unit
+  let input ~listeners _t ~src ~dst buf = return_unit
 
   let writev ?source_port ~dest_ip ~dest_port t bufs =
-    (*
-    begin match source_port with
-      | None -> fail (Failure "TODO; random source port")
-      | Some p -> return p
-    end >>= fun source_port ->
-    Ipv4.allocate_frame ~proto:`UDP ~dest_ip t.ip
-    >>= fun (ipv4_frame, ipv4_len) ->
-    let udp_buf = Cstruct.shift ipv4_frame ipv4_len in
-    Wire_structs.set_udpv4_source_port udp_buf source_port;
-    Wire_structs.set_udpv4_dest_port udp_buf dest_port;
-    Wire_structs.set_udpv4_checksum udp_buf 0;
-    Wire_structs.set_udpv4_length udp_buf
-      (Wire_structs.sizeof_udpv4 + Cstruct.lenv bufs);
-    let ipv4_frame =
-      Cstruct.set_len ipv4_frame (ipv4_len + Wire_structs.sizeof_udpv4)
-    in
-    Ipv4.writev t.ip ipv4_frame bufs
-    *)
+    let src_port = begin match source_port with
+      | None -> assert_failure "source_port missing"
+      | Some p -> p
+    end in
+    List.iter (fun buf -> t.writes <- { src_port; dest_ip; dest_port; buf; } :: t.writes) bufs;
     return_unit
 
   let write ?source_port ~dest_ip ~dest_port t buf =
     writev ?source_port ~dest_ip ~dest_port t [buf]
 
   let connect ip =
-    return (`Ok { ip })
+    return (`Ok { ip; writes=[] })
 
   let disconnect _ = return_unit
+
+  let pop_write t =
+    if t.writes = [] then
+      assert_failure "no write"
+    else
+      let hd = List.hd t.writes in
+      t.writes <- List.tl t.writes;
+      hd
 end
 
 
@@ -225,8 +222,8 @@ module StubTcpv4 : V1_LWT.TCPV4 with type ip = StubIpv4.t = struct
 end
 
 
-module MockStack :
-  (V1_LWT.STACKV4 with type console = unit and type netif = unit and type mode = unit)
+module MockStack (*:
+  (V1_LWT.STACKV4 with type console = unit and type netif = unit and type mode = unit)*)
 = struct
   type +'a io = 'a Lwt.t
   type ('a,'b,'c) config = ('a,'b,'c) V1_LWT.stackv4_config
@@ -315,7 +312,7 @@ module MockStack :
   let disconnect t = return_unit
 end
 
-let create_stack () =
+let create_stack () : MockStack.t =
   let config = {
     V1_LWT.name = "mockstack";
     console = (); interface = ();
@@ -331,21 +328,161 @@ module MockTime : V1_LWT.TIME = struct
   let sleep t = return_unit
 end
 
-module Resolver = Mdns_resolver_mirage.Make(MockTime)(MockStack)
+let mdns_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
+let good_query_str = "valid.local"
+let good_query_name = Dns.Name.string_to_domain_name good_query_str
+let good_response_ip = Ipaddr.V4.of_string_exn "10.0.0.3"
+let good_detail = { qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError }
+let good_answer = { name=good_query_name; cls=RR_IN; flush=true; ttl=120l; rdata=A good_response_ip }
+
+let bad_response_ip = Ipaddr.V4.of_string_exn "10.0.0.4"
+let bad_answer = { name=good_query_name; cls=RR_IN; flush=true; ttl=120l; rdata=A bad_response_ip }
+
+let assert_ip ?msg expected ip =
+  assert_equal ?msg ~printer:Ipaddr.V4.to_string expected ip
+
+let simulate_response
+    ?(from_ip=good_response_ip) ?(from_port=5353) ?(to_ip=mdns_ip)
+    ?(id=0) ?(detail=good_detail)
+    ?(answers=[bad_answer])
+    stack
+  =
+  let response = { id; detail; questions=[]; answers; authorities=[]; additionals=[]; } in
+  let buf = marshal (Dns.Buf.create 512) response |> Cstruct.of_bigarray in
+  let listener_thread = match MockStack.udpv4_listeners stack 5353 with
+    | None -> assert_failure "missing listener"
+    | Some listener -> listener ~src:from_ip ~dst:to_ip ~src_port:from_port buf
+  in
+  Lwt_main.run (
+    Lwt.pick [
+      Lwt_unix.sleep 1.0;
+      listener_thread
+    ])
+
+let simulate_good_response stack = simulate_response ~answers:[good_answer] stack
 
 let tests =
   "Mdns_resolver_mirage" >:::
   [
-    "fail" >:: (fun test_ctxt ->
+    "gethostbyname-fail" >:: (fun test_ctxt ->
         let stack = create_stack () in
-        let r = Resolver.create stack in
-        let thread = Resolver.gethostbyname r "localhost" in
+        (* This mock Time module simulates a time-out *)
+        let module T : V1_LWT.TIME = struct
+          type 'a io = 'a Lwt.t
+          let sleep t = return_unit
+        end in
+        let module R = Mdns_resolver_mirage.Make(T)(MockStack) in
+        let r = R.create stack in
+        let thread = R.gethostbyname r "fail.local" in
         try
-          let _ = Lwt_main.run thread in
+          let _ = run_timeout thread in
           assert_failure "No exception raised"
         with
         | Dns.Protocol.Dns_resolve_error x -> ()
         | _ -> assert_failure "Unexpected exception raised"
+      );
+
+    "gethostbyname-success" >:: (fun test_ctxt ->
+        let stack = create_stack () in
+        let u = MockStack.udpv4 stack in
+        let cond = Lwt_condition.create () in
+        let module T : V1_LWT.TIME = struct
+          type 'a io = 'a Lwt.t
+          let sleep t = Lwt_condition.wait cond
+        end in
+        let module R = Mdns_resolver_mirage.Make(T)(MockStack) in
+        let r = R.create stack in
+
+        (* Verify the query *)
+        let thread = R.gethostbyname r good_query_str in
+        let w = MockUdpv4.pop_write u in
+        assert_equal ~printer:string_of_int 5353 w.src_port;
+        assert_ip mdns_ip w.dest_ip;
+        assert_equal ~printer:string_of_int 5353 w.dest_port;
+        let packet = parse (Dns.Buf.of_cstruct w.buf) in
+        (* AA bit MUST be zero; RA bit MUST be zero; RD bit SHOULD be zero *)
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:valid.local. <A|IN>> <an:> <au:> <ad:>" in
+        assert_equal ~msg:"packet" ~printer:(fun s -> s) expected (to_string packet);
+
+        (* Simulate a response *)
+        simulate_good_response stack;
+        (*
+        let response_ip = Ipaddr.V4.of_string_exn "10.0.0.3" in
+        let response_name = Dns.Name.string_to_domain_name query_str in
+        let answer = { name=response_name; cls=RR_IN; flush=true; ttl=120l; rdata=A response_ip } in
+        let response = {
+          id=0;
+          detail= {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError};
+          questions=[]; answers=[answer]; authorities=[]; additionals=[];
+        } in
+        let response_buf = marshal (Dns.Buf.create 512) response |> Cstruct.of_bigarray in
+        let listener_thread = match MockStack.udpv4_listeners stack 5353 with
+        | None -> assert_failure "missing listener"
+        | Some listener -> listener ~src:response_ip ~dst:w.dest_ip ~src_port:5353 response_buf
+        in
+        run_timeout listener_thread;
+        *)
+
+        let result = run_timeout thread in
+        assert_equal ~msg:"#result" ~printer:string_of_int 1 (List.length result);
+        let result_ip = match List.hd result with
+          | Ipaddr.V4 ip -> ip
+          | _ -> assert_failure "not IPv4"
+        in
+        assert_equal ~msg:"result" ~printer:Ipaddr.V4.to_string good_response_ip result_ip
+      );
+
+    "response-validation" >:: (fun test_ctxt ->
+        let stack = create_stack () in
+        let u = MockStack.udpv4 stack in
+        let cond = Lwt_condition.create () in
+        let module T : V1_LWT.TIME = struct
+          type 'a io = 'a Lwt.t
+          let sleep t = Lwt_condition.wait cond
+        end in
+        let module R = Mdns_resolver_mirage.Make(T)(MockStack) in
+        let r = R.create stack in
+        let thread = R.gethostbyname r good_query_str in
+        let _ = MockUdpv4.pop_write u in
+
+        (* TODO: should ignore responses that are not from the local link *)
+        (* Simulate a response from the wrong source port *)
+        simulate_response ~from_port:53 stack;
+        (* Not a response *)
+        simulate_response ~detail:{ good_detail with qr=Query } stack;
+        (* Wrong opcode *)
+        simulate_response ~detail:{ good_detail with opcode=Inverse } stack;
+        (* Wrong rcode *)
+        simulate_response ~detail:{ good_detail with rcode=NXDomain } stack;
+        (* Wrong name *)
+        simulate_response ~answers:[{ good_answer with name=Dns.Name.string_to_domain_name "wrong.local" }] stack;
+        (* Wrong class *)
+        simulate_response ~answers:[{ good_answer with cls=RR_CS }] stack;
+        (* Wrong RR type *)
+        simulate_response ~answers:[{ good_answer with rdata=MX (111, good_query_name) }] stack;
+
+        (* Verify that the query is re-sent in the event of a time-out *)
+        Lwt_condition.signal cond ();
+        let w2 = MockUdpv4.pop_write u in
+        assert_equal ~printer:string_of_int 5353 w2.src_port;
+        assert_ip mdns_ip w2.dest_ip;
+        assert_equal ~printer:string_of_int 5353 w2.dest_port;
+        let query_packet = parse (Dns.Buf.of_cstruct w2.buf) in
+        (* AA bit MUST be zero; RA bit MUST be zero; RD bit SHOULD be zero *)
+        let expected = "0000 Query:0 na:c:nr:rn 0 <qs:valid.local. <A|IN>> <an:> <au:> <ad:>" in
+        assert_equal ~msg:"query_packet" ~printer:(fun s -> s) expected (to_string query_packet);
+
+        (* Simulate a valid response, but with a bad ID that should be ignored *)
+        simulate_response ~id:1234 ~answers:[good_answer] stack;
+
+        (* Verify that the result corresponds to the valid response *)
+        let result = run_timeout thread in
+        assert_equal ~msg:"#result" ~printer:string_of_int 1 (List.length result);
+        let result_ip = match List.hd result with
+          | Ipaddr.V4 ip -> ip
+          | _ -> assert_failure "not IPv4"
+        in
+        assert_equal ~msg:"result" ~printer:Ipaddr.V4.to_string good_response_ip result_ip
       );
   ]
 
