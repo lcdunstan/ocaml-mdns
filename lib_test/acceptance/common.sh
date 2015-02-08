@@ -163,8 +163,13 @@ function start_unikernel {
     for index in "$@" ; do
         local dom_name=${mirage_name}${index}
         local dom_xl=$tmp_here/${dom_name}.xl
-        echo "Starting ${dom_name}"
+        echo "Starting ${dom_name} paused"
         xl create $dom_xl
+    done
+    for index in "$@" ; do
+        local dom_name=${mirage_name}${index}
+        echo "Unpausing ${dom_name}"
+        xl unpause $dom_name
     done
     for index in "$@" ; do
         local dom_name=${mirage_name}${index}
