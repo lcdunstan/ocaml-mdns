@@ -72,7 +72,7 @@ let hexdump ibuf =
 let load_file path =
   let ch = open_in path in
   let n = in_channel_length ch in
-  let data = String.create n in
+  let data = Bytes.create n in
   really_input ch data 0 n;
   close_in ch;
   data

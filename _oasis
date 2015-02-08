@@ -31,8 +31,8 @@ Library mdns
   Pack: true
   Modules:
     Protocol
-  BuildDepends:	cstruct (>= 0.7.1), cstruct.syntax, re, re.str, ipaddr (>= 2.2.0), base64, dns
-  XMetaRequires: cstruct, re, re.str, ipaddr, base64, dns
+  BuildDepends:	cstruct (>= 0.7.1), cstruct.syntax, re, re.str, ipaddr (>= 2.2.0), base64, dns, bytes
+  XMetaRequires: cstruct, re, re.str, ipaddr, base64, dns, bytes
 
 Library "mdns-lwt-core"
   Path: lwt

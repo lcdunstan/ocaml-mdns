@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4a9fd51959dbca597388dda0f8f520a0)
+# DO NOT EDIT (digest: d6c6b4ba2444e2d1b559b525af7f0ed7)
 version = "0.0.1"
 description = "Multicast DNS responder and resolver in OCaml"
-requires = "cstruct re re.str ipaddr base64 dns"
+requires = "cstruct re re.str ipaddr base64 dns bytes"
 archive(byte) = "mdns.cma"
 archive(byte, plugin) = "mdns.cma"
 archive(native) = "mdns.cmxa"

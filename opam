@@ -12,6 +12,7 @@ build: [
 ]
 remove: [["ocamlfind" "remove" "mdns"]]
 depends: [
+  "base-bytes"
   "lwt" {>= "2.4.3"}
   "cstruct" {>= "1.0.1"}
   "ocamlfind"
