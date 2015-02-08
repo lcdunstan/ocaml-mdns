@@ -23,15 +23,14 @@ function setup {
 }
 
 function cleanup {
-    if [ ! -d $tmp_here ] ; then
-        mkdir $tmp_here
-    fi
+    rm -f cleanup.out
     echo -n "Cleanup: "
-    if ./cleanup.sh 2>&1 > $tmp_here/cleanup.out ; then
+    if ./cleanup.sh > cleanup.out 2>&1 ; then
         echo "OK"
+        rm cleanup.out
     else
         echo "Failed"
-        cat $tmp_here/cleanup.out
+        cat cleanup.out
         exit 1
     fi
 }
