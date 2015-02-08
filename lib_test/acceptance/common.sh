@@ -368,7 +368,9 @@ trap control_c SIGINT
 # Kill background jobs when exiting for any reason
 function kill_jobs {
     local job_pids=$(jobs -pr)
-    [ -n "$job_pids" ] && kill $job_pids
+    if [ -n "$job_pids" ] ; then
+        kill $job_pids
+    fi
 }
 trap kill_jobs EXIT
 
