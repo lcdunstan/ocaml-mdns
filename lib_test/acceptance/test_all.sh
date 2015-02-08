@@ -65,6 +65,7 @@ setup
 run_test test_normal_probe
 run_test test_conflict_later
 run_test test_conflict_simultaneous
+run_test test_resolver
 
 echo
 echo "*** Summary: ${count_fail} failures out of ${count_total} tests total"
