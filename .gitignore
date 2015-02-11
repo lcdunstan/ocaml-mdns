@@ -25,3 +25,4 @@ lib_test/mirage/static1.mli
 *.elf
 __pycache__
 tmp
+local-config.sh

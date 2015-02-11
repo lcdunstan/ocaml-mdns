@@ -5,6 +5,7 @@ declare -g capture_txt
 #declare -g -a mirage_logcon_array
 
 function flush_cache {
+    need_bridge
     # Make sure Avahi is not caching old records between tests
     echo "Resetting the bridge"
     ip link set $bridge down
@@ -337,6 +338,7 @@ function dump_capture {
 }
 
 function verify_hostname {
+    which avahi-resolve-host-name >/dev/null || apt-get install avahi-utils -y
     local hostname=$1
     local ipaddr=$2
     echo "Verifying that ${hostname} resolve to IP address $ipaddr"

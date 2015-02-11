@@ -5,8 +5,6 @@ set -eu
 . common.sh
 need_root
 
-which avahi-resolve-host-name >/dev/null || apt-get install avahi-utils -y
-
 test_name=test_normal_probe
 
 flush_cache

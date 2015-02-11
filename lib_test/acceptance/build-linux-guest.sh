@@ -7,16 +7,10 @@ set -eu
 . common.sh
 need_root
 
-pvs /dev/mmcblk0p3 > /dev/null 2>&1 || {
-    echo "LVM physical volume not found!"
-    echo "Use:"
-    echo "pvcreate /dev/mmcblk0p3"
-    echo "vgcreate vg0 /dev/mmcblk0p3"
-    exit 1
-}
 vgs vg0 > /dev/null 2>&1 || {
     echo "LVM volume group vg0 not found!"
     echo "Use:"
+    echo "pvcreate /dev/mmcblk0p3"
     echo "vgcreate vg0 /dev/mmcblk0p3"
     exit 1
 }
@@ -27,6 +21,8 @@ lvs vg0/${linux_guest_lv} > /dev/null 2>&1 && {
     exit 1
 }
 
+which debootstrap >/dev/null || apt-get install debootstrap -y
+
 echo "Creating guest logical volume..."
 lvcreate -L 4G vg0 --name ${linux_guest_lv}
 echo "Creating EXT4 file system..."
@@ -36,7 +32,16 @@ echo "Bootstrapping..."
 mount /dev/vg0/${linux_guest_lv} /mnt && \
 trap "umount /mnt" EXIT # umount on exit
 
-debootstrap --arch armhf trusty /mnt
+machine=`uname -m`
+if [ "$machine" == "armv7l" ] ; then
+    arch=armhf
+elif [ "$machine" == "x86_64" ] ; then
+    arch=amd64
+else
+    echo "Unsupported machine ${machine}"
+    exit 1
+fi
+debootstrap --arch ${arch} trusty /mnt
 
 echo "Setting hostname..."
 echo ${linux_guest_hostname} > /mnt/etc/hostname
