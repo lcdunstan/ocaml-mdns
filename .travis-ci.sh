@@ -77,8 +77,8 @@ if [ "$OCAML_VERSION" == "4.02.1" ] ; then
     # These commands are from ocveralls .travis.yml
     echo @@@ upload coverage to coveralls.io using ocveralls
     chmod +x ./ocveralls.sh
-    cd _build
-    ../ocveralls.sh ../lib_test/ounit/bisect*.out
-    cd ..
+    #cd _build
+    ./ocveralls.sh ./lib_test/ounit/bisect*.out
+    #cd ..
 fi
 

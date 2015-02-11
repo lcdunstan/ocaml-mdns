@@ -32,8 +32,9 @@ fi
 JSON_FILE="$SERVICE_NAME-$JOB_ID.json"
 
 # generate json
-bisect-report -coveralls-property service_job_id $JOB_ID \
-    -coveralls-property service_name $SERVICE_NAME -coveralls $JSON_FILE $*
+#bisect-report -coveralls-property service_job_id $JOB_ID \
+#    -coveralls-property service_name $SERVICE_NAME -coveralls $JSON_FILE $*
+ocveralls --prefix _build $* > $JSON_FILE
 
 #send json
 curl -F json_file=@$JSON_FILE https://coveralls.io/api/v1/jobs
