@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2013 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2015 Luke Dunstan <LukeDunstan81@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,20 +53,3 @@ module Client : Dns.Protocol.CLIENT = struct
   let timeout _id = Dns.Protocol.Dns_resolve_timeout
 end
 
-let contain_exc l v =
-  try
-    Some (v ())
-  with exn ->
-    Printexc.print_backtrace stderr;
-    Printf.eprintf "mdns %s exn: %s\n%!" l (Printexc.to_string exn);
-    None
-
-module Server : Dns.Protocol.SERVER with type context = Packet.t = struct
-  type context = Packet.t
-
-  let query_of_context x = x
-
-  let parse buf = contain_exc "parse" (fun () -> Packet.parse buf)
-  let marshal buf _q response =
-    contain_exc "marshal" (fun () -> Packet.marshal buf response)
-end

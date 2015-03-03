@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2013 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2015 Luke Dunstan <LukeDunstan81@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,3 @@ open Dns
 (** The default DNS resolver using the standard DNS protocol *)
 module Client : Dns.Protocol.CLIENT
 
-(** The default DNS server using the standard DNS protocol *)
-module Server : Dns.Protocol.SERVER with type context = Packet.t
-
-val contain_exc : string -> (unit -> 'a) -> 'a option

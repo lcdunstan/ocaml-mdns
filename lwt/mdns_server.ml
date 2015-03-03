@@ -1,6 +1,5 @@
 (*
- * Copyright (c) 2005-2012 Anil Madhavapeddy <anil@recoil.org>
- * Copyright (c) 2013 David Sheets <sheets@alum.mit.edu>
+ * Copyright (c) 2015 Luke Dunstan <LukeDunstan81@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +15,6 @@
  *)
 
 open Lwt
-open Printf
 
 module DR = Dns.RR
 module DP = Dns.Packet
@@ -33,7 +31,6 @@ module type TRANSPORT = sig
 end
 
 let label str =
-(*   printf "label: %s\n%!" str; *)
   MProf.Trace.label str
 
 let multicast_ip = Ipaddr.V4.of_string_exn "224.0.0.251"
@@ -259,7 +256,6 @@ module Make (Transport : TRANSPORT) = struct
     let names = Hashtbl.fold (
       fun name state l ->
         if state <> Confirmed then begin
-(*           printf "prepare_probe: %s\n%!" (Dns.Name.domain_name_to_string name); *)
           name :: l
         end else
           l
@@ -301,15 +297,11 @@ module Make (Transport : TRANSPORT) = struct
       raise RestartProbe
 
   let sleep t f =
-    (* printf "before sleep\n"; *)
     Transport.sleep f >>= fun () ->
-    (* printf "after sleep\n"; *)
     return_unit
 
   let wait_cond t =
-    (* printf "wait_cond 1\n"; *)
     Lwt_condition.wait t.probe_condition >>= fun () ->
-    (* printf "wait_cond 2\n"; *)
     return_unit
 
   let probe_cycle t packet =
@@ -345,10 +337,8 @@ module Make (Transport : TRANSPORT) = struct
     let names = Hashtbl.fold (
       fun name state l ->
         if state = Probing then begin
-(*           printf "Done probing: %s\n%!" (Dns.Name.domain_name_to_string name); *)
           name :: l
         end else begin
-(*           printf "NOT done probing: %s\n%!" (Dns.Name.domain_name_to_string name); *)
           l
         end
       ) t.unique []
@@ -370,15 +360,12 @@ module Make (Transport : TRANSPORT) = struct
   let rec probe_forever t first first_wakener =
     begin
       try_lwt
-(*         printf "probe_forever 1\n"; *)
         (* If we lose a simultaneous probe tie-break then we have to delay 1 second *)
         (if t.probe_tiebreak then
           Transport.sleep 1.0
         else
           return_unit) >>= fun () ->
-(*         printf "probe_forever 2\n"; *)
         try_probe t >>= fun done_probe ->
-(*         printf "probe_forever 3\n"; *)
         (* We will only reach this point if the probe cycle has completed *)
         if !first then begin
           (* Only once, because a thread can only be woken once *)
@@ -393,15 +380,12 @@ module Make (Transport : TRANSPORT) = struct
           Lwt_condition.wait t.probe_condition
         end
       with
-      | RestartProbe -> (* printf "RestartProbe\n";*) return_unit
-      | _ -> printf "Unknown exception\n"; return_unit
+      | RestartProbe -> return_unit
+      | _ -> return_unit
     end >>= fun () ->
-(*     printf "probe_forever 4\n"; *)
     if t.probe_end then begin
-(*       printf "probe_end\n"; *)
       return_unit
     end else begin
-(*       printf "probe_forever 5\n"; *)
       probe_forever t first first_wakener
     end
 
@@ -624,10 +608,8 @@ module Make (Transport : TRANSPORT) = struct
               (* If we are currently probing then we must defer to the existing host *)
               (* In any case we must then re-probe *)
               if state = Probing then begin
-(*                 printf "Conflict during probe\n"; *)
                 rename_unique t name PreProbe;
               end else begin
-(*                 printf "Conflict outside probe\n"; *)
                 Hashtbl.replace t.unique name PreProbe
               end;
               true
