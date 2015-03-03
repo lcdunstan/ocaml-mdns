@@ -40,50 +40,13 @@ module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
     let len = 1500 in
     (ethernet_frame, len)
 
-  (* We write a whole frame, truncated from the right where the
-   * packet data stops.
-  *)
   let write t frame data =
-    (*
-    let ihl = 5 in (* TODO options *)
-    let tlen = (ihl * 4) + (Cstruct.len data) in
-    adjust_output_header ~tlen frame;
-    Ethif.writev t.ethif [frame;data]
-    *)
     return_unit
 
   let writev t ethernet_frame bufs =
-    (*
-    let tlen =
-      Cstruct.len ethernet_frame
-      - Wire_structs.sizeof_ethernet
-      + Cstruct.lenv bufs
-    in
-    adjust_output_header ~tlen ethernet_frame;
-    Ethif.writev t.ethif (ethernet_frame::bufs)
-    *)
     return_unit
 
   let input t ~tcp ~udp ~default buf =
-    (*
-    (* buf pointers to to start of IPv4 header here *)
-    let ihl = (Wire_structs.get_ipv4_hlen_version buf land 0xf) * 4 in
-    let src = Ipaddr.V4.of_int32 (Wire_structs.get_ipv4_src buf) in
-    let dst = Ipaddr.V4.of_int32 (Wire_structs.get_ipv4_dst buf) in
-    let payload_len = Wire_structs.get_ipv4_len buf - ihl in
-    (* XXX this will raise exception for 0-length payload *)
-    let hdr = Cstruct.sub buf 0 ihl in
-    let data = Cstruct.sub buf ihl payload_len in
-    match Wire_structs.get_ipv4_proto buf with
-    | 1 -> (* ICMP *)
-      icmp_input t src hdr data
-    | 6 -> (* TCP *)
-      tcp ~src ~dst data
-    | 17 -> (* UDP *)
-      udp ~src ~dst data
-    | proto ->
-      default ~proto ~src ~dst data
-    *)
     return_unit
 
   let connect ethif =
@@ -114,17 +77,6 @@ module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
   let get_ip_gateways { gateways; _ } = gateways
 
   let checksum buf bufl =
-    (*
-    let pbuf = Io_page.to_cstruct (Io_page.get 1) in
-    let pbuf = Cstruct.set_len pbuf 4 in
-    Cstruct.set_uint8 pbuf 0 0;
-    fun frame bufs ->
-      let frame = Cstruct.shift frame Wire_structs.sizeof_ethernet in
-      Cstruct.set_uint8 pbuf 1 (Wire_structs.get_ipv4_proto frame);
-      Cstruct.BE.set_uint16 pbuf 2 (Cstruct.lenv bufs);
-      let src_dst = Cstruct.sub frame 12 (2 * 4) in
-      Tcpip_checksum.ones_complement_list (src_dst :: pbuf :: bufs)
-    *)
     0
 
   let get_source t ~dst:_ =
