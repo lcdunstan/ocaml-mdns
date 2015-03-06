@@ -42,36 +42,20 @@ mirage configure --unix
 make
 cd ../..
 
-
-if false ; then
-    # From https://github.com/sagotch/ocveralls/blob/master/.travis-ci.sh
-    # install patched bisect library since it is not updated on opam yet
-    echo @@@ installing patched bisect library
-    curl -L http://bisect.sagotch.fr | tar -xzf -
-    cd Bisect
-    chmod +x configure
-    ./configure
-    cat Makefile.config
-    make all
-    sudo make install # ./configure set PATH_OCAML_PREFIX=/usr instead of
-                      # using .opam directory, so we need sudo
-    cd ..
-fi
-
 # ocveralls now requires OCaml >=4.02.0
 if [ "$OCAML_VERSION" == "4.02.1" ] ; then
     opam install ocveralls
 
-    echo @@@ Installing OASIS
-    opam install oasis
-    echo @@@ hacking mdns _oasis file for bisect
-    sed -i -e 's/^\(\s\+BuildDepends:\s.*\)$/\1, bisect/' _oasis
-    oasis setup
+    #echo @@@ Installing OASIS
+    #opam install oasis
+    #echo @@@ hacking mdns _oasis file for bisect
+    #sed -i -e 's/^\(\s\+BuildDepends:\s.*\)$/\1, bisect/' _oasis
+    #oasis setup
 
     # run test, then send result to coveralls
     echo @@@ code coverage during test
     make clean
-    make
+    make COVERAGE=--enable-coverage
     make test
 
     # These commands are from ocveralls .travis.yml

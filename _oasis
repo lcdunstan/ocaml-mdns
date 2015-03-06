@@ -19,6 +19,10 @@ Flag async
   Description: build the Async library
   Default: false
 
+Flag coverage
+  Description: Use Bisect to generate coverage data
+  Default:     false
+
 Flag todo
   Description: not yet implemented
   Default: false

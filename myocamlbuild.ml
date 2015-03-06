@@ -631,6 +631,40 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 # 632 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
+(* This file is used by the build system (ocamlbuild specifically) to
+   instrument code when we request code coverage. Otherwise it makes no
+   changes to the code. *)
+
+let has_coverage () =
+  let key = "coverage=" in
+  let n   = String.length key in
+  try
+    let ic = open_in "setup.data" in
+    let rec l () =
+      let s = input_line ic in
+      if String.sub s 0 n = key then
+        let sub = String.sub s (n + 1) (String.length s - n - 2) in
+        bool_of_string sub
+      else
+        l ()
+    in
+    l ()
+  with _ -> false
+
+let () =
+  let additional_rules = function
+    | After_rules     ->
+      if has_coverage () then
+        tag_any ["pkg_bisect"]
+      else
+        ()
+    | _ -> ()
+  in
+  dispatch
+    (MyOCamlbuildBase.dispatch_combine
+      [dispatch_default; additional_rules])
+
+(*
 let () =
   dispatch
     (fun hook ->
@@ -641,3 +675,4 @@ let () =
              flag [ "ocaml"; "ocamldep"; "lwt_debug" ] & S[A"-ppopt"; A"-lwt-debug"];
          | _ -> ()
     )
+*)
