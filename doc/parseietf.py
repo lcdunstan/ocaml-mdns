@@ -91,6 +91,7 @@ class Clause:
     def as_xml(self):
         elem = etree.Element('clause')
         elem.set('id', self.id)
+        elem.set('num', str(self.num))
         elem.text = '\n'
         for sub in self.substrings:
             elem.append(sub.as_xml())
@@ -153,22 +154,23 @@ class Paragraph:
                     end2 = text.find('.) ', find_from)
                     if end2 == -1:
                         end2 = len(text)
-                    end3 = text.find(' * ', find_from)
-                    if end3 == -1:
-                        end3 = len(text)
-                    elif text[start:end3].strip() == '':
-                        end3 = len(text)
-                    end = min(end1, end2, end3)
+                    #end3 = text.find(' * ', find_from)
+                    #if end3 == -1:
+                    #    end3 = len(text)
+                    #elif text[start:end3].strip() == '':
+                    #    end3 = len(text)
+                    end = min(end1, end2)#, end3)
                     if end == len(text):
                         break
                     if end == end2:
                         end += 2
                         break
-                    if end == end3:
-                        break
+                    #if end == end3:
+                    #    break
                     assert end == end1
                     # Some abbreviations can occur at the end of a clause.
-                    if text[end1-10:end1-1] == 'Appendix ':
+                    app = text.rfind('Appendix', start, end1)
+                    if app != -1 and text[app+8:end1-1].strip() == '':
                         end += 1
                         break
                     # Heuristic for skipping list numbering, e.g. "1. "
@@ -213,7 +215,7 @@ class Paragraph:
         else:
             for line in self.lines:
                 elem.append(line.as_xml())
-        elem.tail = '\n'
+        elem.tail = '\n\n'
         return elem
 
 
@@ -243,12 +245,14 @@ class Section:
 
     def as_xml(self):
         elem = etree.Element('section')
+        elem.text = '\n'
         if self.num:
             elem.set('num', self.num)
             elem.set('id', self.id)
         elem.set('name', self.name)
         for paragraph in self.paragraphs:
             elem.append(paragraph.as_xml())
+        elem.tail = '\n\n'
         return elem
 
 
@@ -441,11 +445,17 @@ class TestParse(unittest.TestCase):
 
         clause = paragraph.clauses[0]
         self.assertEqual(1, clause.num)
-        self.assertEqual('''Any DNS query for a name ending with ".local." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 (or its IPv6 equivalent FF02::FB).''', clause.text)
+        self.assertEqual('Any DNS query for a name ending with ".local." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 (or its IPv6 equivalent FF02::FB).', clause.text)
 
         clause = paragraph.clauses[1]
         self.assertEqual(2, clause.num)
-        self.assertEqual('''The design rationale for using a fixed multicast address instead of selecting from a range of multicast addresses using a hash function is discussed in Appendix B.''', clause.text)
+        self.assertEqual('The design rationale for using a fixed multicast address instead of selecting from a range of multicast addresses using a hash function is discussed in Appendix B.', clause.text)
+
+        section = doc.sections[14]
+        self.assertEqual('6', section.num)
+        paragraph = section.paragraphs[13]
+        self.assertEqual('Other benefits of sending responses via multicast are discussed in Appendix D.', paragraph.clauses[1].text)
+        self.assertEqual('A Multicast DNS querier MUST only accept unicast responses if they answer a recently sent query (e.g., sent within the last two seconds) that explicitly requested unicast responses.', paragraph.clauses[2].text)
 
 
 def main():
