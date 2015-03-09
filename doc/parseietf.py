@@ -97,6 +97,14 @@ class Clause:
         elem.tail = '\n'
         return elem
 
+    def as_html(self):
+        elem = etree.Element('span')
+        elem.set('id', self.id)
+        elem.set('class', 'clause')
+        elem.text = self.text
+        elem.tail = '\n'
+        return elem
+
 
 class Paragraph:
     def __init__(self, section, num):
@@ -217,6 +225,23 @@ class Paragraph:
         elem.tail = '\n\n'
         return elem
 
+    def as_html(self):
+        self.parse()
+        elem = etree.Element('p')
+        elem.set('class', 'paragraph')
+        elem.text = '\n'
+        if self.id:
+            elem.set('id', self.id)
+        if self.clauses:
+            for clause in self.clauses:
+                elem.append(clause.as_html())
+        else:
+            pre = etree.Element('pre')
+            pre.text = '\n'.join(line.text for line in self.lines)
+            elem.append(pre)
+        elem.tail = '\n\n'
+        return elem
+
 
 class Section:
     def __init__(self, doc, heading):
@@ -254,6 +279,14 @@ class Section:
         elem.tail = '\n\n'
         return elem
 
+    def as_html(self):
+        h = etree.Element('h2')
+        if self.num:
+            h.set('id', self.id)
+        h.text = self.heading
+        h.tail = '\n\n'
+        return [h] + [paragraph.as_html() for paragraph in self.paragraphs]
+
 
 class Document:
     def __init__(self, text):
@@ -289,6 +322,33 @@ class Document:
         root.append(sections_elem)
 
         return etree.ElementTree(root)
+
+    def as_html(self):
+        root = etree.Element('html',
+                xmlns='http://www.w3.org/1999/xhtml')
+
+        head = etree.Element('head')
+        head.text = '\n'
+        title = 'RFC {0}: {1}'.format(self.rfc_number, self.title)
+        title_elem = etree.Element('title')
+        title_elem.text = title
+        head.append(title_elem)
+        head.tail = '\n'
+        root.append(head)
+
+        body = etree.Element('body')
+        body.text = '\n'
+        
+        h = etree.Element('h1')
+        h.text = title
+        body.append(h)
+
+        for section in self.sections:
+            body.extend(section.as_html())
+        body.tail = '\n'
+        root.append(body)
+
+        return b'<!DOCTYPE html>\n' + etree.tostring(root)
 
 
 def split_lines(doc, text):
@@ -356,6 +416,8 @@ def parse(text):
         # Skip blank lines
         while i < num_lines and lines[i].is_blank:
             i += 1
+            # Blank lines alone aren't always the end of a paragraph
+            # because a paragraph may be split across two pages.
             if paragraph and paragraph.has_ended:
                 paragraph.parse()
                 paragraph = None
@@ -378,6 +440,9 @@ def parse(text):
             # This is a page footer
             assert line.find(doc.category) != -1, line
             assert line.find('[Page ') != -1, line
+        elif line == '\x0c\n':
+            # Form feed
+            pass
         else:
             # Section heading
             section = Section(doc, line)
@@ -410,7 +475,9 @@ def main():
         xml = doc.as_xml()
         xml.write(args.output_xml[0])
     if args.output_html:
-        assert False
+        html = doc.as_html()
+        with open(args.output_html[0], 'wb') as f:
+            f.write(html)
 
 if __name__ == '__main__':
     main()
