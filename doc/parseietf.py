@@ -394,14 +394,23 @@ def parse_path(path):
     return doc
 
 
-def convert_to_xml(path):
-    doc = parse_path(path)
-    xml = doc.as_xml()
-    xml.write(path + '.xml')
-
-
 def main():
-    convert_to_xml('rfc6762.txt')
+    import argparse
+    parser = argparse.ArgumentParser(description='Split an IETF RFC into clauses')
+    parser.add_argument('input', metavar='rfcNNNN.txt', nargs=1, type=str,
+            help='The path to the input RFC document in plain text format (.txt)')
+    parser.add_argument('--xml', dest='output_xml', nargs=1, type=str,
+            help='The path to an XML output file')
+    parser.add_argument('--html', dest='output_html', nargs=1, type=str,
+            help='The path to an HTML output file')
+    args = parser.parse_args()
+
+    doc = parse_path(args.input[0])
+    if args.output_xml:
+        xml = doc.as_xml()
+        xml.write(args.output_xml[0])
+    if args.output_html:
+        assert False
 
 if __name__ == '__main__':
     main()
