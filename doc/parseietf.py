@@ -146,14 +146,6 @@ class Paragraph:
                     find_from = ellipsis + 3
                     ellipsis = text.find('...', find_from)
 
-                #open_quote = text.find('"', find_from)
-                #while open_quote != -1:
-                #    close_quote = text.find('"', open_quote + 1)
-                #    if close_quote == -1:
-                #        break
-                #    find_from = close_quote + 1
-                #    open_quote = text.find('"', find_from)
-
                 while True:
                     end1 = text.find('. ', find_from)
                     if end1 == -1:
@@ -161,19 +153,12 @@ class Paragraph:
                     end2 = text.find('.) ', find_from)
                     if end2 == -1:
                         end2 = len(text)
-                    #end3 = text.find(' * ', find_from)
-                    #if end3 == -1:
-                    #    end3 = len(text)
-                    #elif text[start:end3].strip() == '':
-                    #    end3 = len(text)
                     end = min(end1, end2)#, end3)
                     if end == len(text):
                         break
                     if end == end2:
                         end += 2
                         break
-                    #if end == end3:
-                    #    break
                     assert end == end1
                     # Some abbreviations can occur at the end of a clause.
                     app = text.rfind('Appendix', start, end1)
@@ -185,8 +170,6 @@ class Paragraph:
                     space = text.rfind(' ', start, end1)
                     if space == -1:
                         space = start
-                    #if space - start > 2:
-                    #    break
                     if end1 - space > 2:
                         end += 1
                         break
