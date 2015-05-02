@@ -8,6 +8,17 @@ import re
 import xml.etree.ElementTree as etree
 
 
+STYLES = '''
+.label {
+    display: inline-block;
+    background-color: #75df67;
+    border: solid 1px black;
+    border-radius: 5px;
+    margin: 1px 3px;
+    padding: 3px 5px;
+}
+'''
+
 class ParseException(Exception):
     pass
 
@@ -25,6 +36,10 @@ class Line:
         return self.doc.text[self.start : self.end]
 
     @property
+    def id(self):
+        return 'L{0}'.format(self.num)
+
+    @property
     def is_blank(self):
         return self.text.strip() == ''
 
@@ -34,9 +49,17 @@ class Line:
 
     def as_xml(self):
         elem = etree.Element('line')
-        elem.set('id', 'L{0}'.format(self.num))
+        elem.set('id', self.id)
         elem.set('start', str(self.start))
         elem.set('end', str(self.end))
+        elem.text = self.text
+        elem.tail = '\n'
+        return elem
+
+    def as_html(self):
+        elem = etree.Element('span')
+        elem.set('id', self.id)
+        elem.set('class', 'line')
         elem.text = self.text
         elem.tail = '\n'
         return elem
@@ -73,6 +96,7 @@ class LineSubstring:
         elem.tail = '\n'
         return elem
 
+
 class Clause:
     def __init__(self, paragraph, num):
         self.paragraph = paragraph
@@ -101,7 +125,11 @@ class Clause:
         elem = etree.Element('span')
         elem.set('id', self.id)
         elem.set('class', 'clause')
-        elem.text = self.text
+        label = etree.Element('span')
+        label.set('class', 'label')
+        label.text = self.id
+        elem.append(label)
+        label.tail = self.text
         elem.tail = '\n'
         return elem
 
@@ -193,7 +221,8 @@ class Paragraph:
                 num += 1
 
     def as_xml(self):
-        self.parse()
+        if not self.clauses:
+            self.parse()
         elem = etree.Element('paragraph')
         elem.set('num', str(self.num))
         if self.id:
@@ -209,7 +238,8 @@ class Paragraph:
         return elem
 
     def as_html(self):
-        self.parse()
+        if not self.clauses:
+            self.parse()
         elem = etree.Element('p')
         elem.set('class', 'paragraph')
         elem.text = '\n'
@@ -218,10 +248,13 @@ class Paragraph:
         if self.clauses:
             for clause in self.clauses:
                 elem.append(clause.as_html())
-        else:
+        elif self.section.name == 'Table of Contents':
             pre = etree.Element('pre')
             pre.text = '\n'.join(line.text for line in self.lines)
             elem.append(pre)
+        else:
+            for line in self.lines:
+                elem.append(line.as_html())
         elem.tail = '\n\n'
         return elem
 
@@ -315,6 +348,11 @@ class Document:
         title = 'RFC {0}: {1}'.format(self.rfc_number, self.title)
         title_elem = etree.Element('title')
         title_elem.text = title
+        title_elem.tail = '\n'
+        style = etree.Element('style')
+        style.text = STYLES
+        style.tail = '\n'
+        head.append(style)
         head.append(title_elem)
         head.tail = '\n'
         root.append(head)
@@ -332,6 +370,38 @@ class Document:
         root.append(body)
 
         return b'<!DOCTYPE html>\n' + etree.tostring(root)
+
+    def as_reqif(self):
+        root = etree.Element('REQ-IF',
+                number=str(self.rfc_number),
+                title=self.title,
+                )
+
+        root.text = '\n'
+        header_elem = etree.Element('THE-HEADER')
+        header_elem.text = '\n'
+        #for key in sorted(self.header.keys()):
+        #    elem = etree.Element('value', name=key)
+        #    elem.text = self.header[key]
+        #    elem.tail = '\n'
+        #    header_elem.append(elem)
+        header_elem.tail = '\n\n'
+        root.append(header_elem)
+
+        core_content = etree.Element('CORE-CONTENT')
+        req_if_content = etree.Element('REQ-IF-CONTENT')
+        # TODO
+        core_content.append(req_if_content)
+        root.append(core_content)
+
+        #sections_elem = etree.Element('sections')
+        #sections_elem.text = '\n\n'
+        #for section in self.sections:
+        #    sections_elem.append(section.as_xml())
+        #sections_elem.tail = '\n'
+        #root.append(sections_elem)
+
+        return etree.ElementTree(root)
 
 
 def split_lines(doc, text):
@@ -448,9 +518,11 @@ def main():
     parser.add_argument('input', metavar='rfcNNNN.txt', nargs=1, type=str,
             help='The path to the input RFC document in plain text format (.txt)')
     parser.add_argument('--xml', dest='output_xml', nargs=1, type=str,
-            help='The path to an XML output file')
+            help='The path to a custom XML output file')
     parser.add_argument('--html', dest='output_html', nargs=1, type=str,
             help='The path to an HTML output file')
+    #parser.add_argument('--reqif', dest='output_reqif', nargs=1, type=str,
+    #        help='The path to a ReqIF XML output file')
     args = parser.parse_args()
 
     doc = parse_path(args.input[0])
@@ -461,6 +533,9 @@ def main():
         html = doc.as_html()
         with open(args.output_html[0], 'wb') as f:
             f.write(html)
+    #if args.output_reqif:
+    #    xml = doc.as_reqif()
+    #    xml.write(args.output_reqif[0])
 
 if __name__ == '__main__':
     main()
