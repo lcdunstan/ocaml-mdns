@@ -1141,7 +1141,7 @@
 <linesub end="35384" start="35249">has already established sole ownership of the name, it MUST return</linesub>
 <linesub end="35456" start="35319">negative answers to queries for records that it knows not to exist.</linesub>
 <notes>
-    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).
+    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).</note>
 </notes>
 </clause>
 <clause id="s6_p3_c3" importance="must" num="3">
@@ -1150,7 +1150,7 @@
 <linesub end="35650" start="35529">AAAA queries for "host.local." by sending a negative answer</linesub>
 <linesub end="35712" start="35592">indicating that no AAAA records exist for that name.</linesub>
 <notes>
-    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).
+    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).</note>
 </notes>
 </clause>
 <clause id="s6_p3_c4" num="4">
