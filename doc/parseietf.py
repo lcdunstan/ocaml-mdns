@@ -97,6 +97,18 @@ class LineSubstring:
         return elem
 
 
+def get_importance(text):
+    # See RFC 2119
+    # The word "NOT" doesn't affect importance
+    if text.find('"MUST"') == -1:  # Ignore terminology section
+        if text.find('MUST') != -1 or text.find('SHALL') != -1 or text.find('REQUIRED') != -1:
+            return 'must'
+        elif text.find('SHOULD') != -1 or text.find('RECOMMENDED') != -1:
+            return 'should'
+        elif text.find('MAY') != -1 or text.find('OPTIONAL') != -1:
+            return 'may'
+
+
 class Clause:
     def __init__(self, paragraph, num):
         self.paragraph = paragraph
@@ -111,10 +123,17 @@ class Clause:
     def id(self):
         return '{0}_c{1}'.format(self.paragraph.id, self.num)
 
+    @property
+    def importance(self):
+        return get_importance(self.text)
+
     def as_xml(self):
         elem = etree.Element('clause')
         elem.set('id', self.id)
         elem.set('num', str(self.num))
+        importance = self.importance
+        if importance:
+            elem.set('importance', importance)
         elem.text = '\n'
         for sub in self.substrings:
             elem.append(sub.as_xml())
@@ -124,7 +143,11 @@ class Clause:
     def as_html(self):
         elem = etree.Element('span')
         elem.set('id', self.id)
-        elem.set('class', 'clause')
+        css_class = 'clause'
+        importance = self.importance
+        if importance:
+            css_class += ' ' + importance
+        elem.set('class', css_class)
         label = etree.Element('span')
         label.set('class', 'label')
         label.text = self.id
@@ -156,6 +179,10 @@ class Paragraph:
             return '{0}_p{1}'.format(self.section.id, self.num)
         else:
             return ''
+
+    @property
+    def importance(self):
+        return get_importance(self.text)
 
     def parse(self):
         self.clauses = []
@@ -227,6 +254,9 @@ class Paragraph:
         elem.set('num', str(self.num))
         if self.id:
             elem.set('id', self.id)
+        importance = self.importance
+        if importance:
+            elem.set('importance', importance)
         elem.text = '\n'
         if self.clauses:
             for clause in self.clauses:

@@ -13,6 +13,14 @@ STYLES = '''
     margin: 1px 3px;
     padding: 3px 5px;
 }
+
+.must {
+    background-color: #dddd33;
+}
+
+.should {
+    background-color: #eecc33;
+}
 '''
 
 class ParseException(Exception):
@@ -31,7 +39,11 @@ def line_as_element(line):
 def clause_as_element(clause):
     elem = etree.Element('span')
     elem.set('id', clause.get('id'))
-    elem.set('class', 'clause')
+    css_class = 'clause'
+    importance = clause.get('importance')
+    if importance:
+        css_class += ' ' + importance
+    elem.set('class', css_class)
     label = etree.Element('span')
     label.set('class', 'label')
     label.text = clause.get('id')
