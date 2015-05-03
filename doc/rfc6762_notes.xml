@@ -265,6 +265,7 @@
 <linesub end="10068" start="9930">other responder already claims ownership of that set, as described</linesub>
 <linesub end="10093" start="10003">in Section 8.1, "Probing".</linesub>
 <notes>
+    <note>Detailed requirements elsewhere:</note>
     <ref type="section" target="s8.1" />
 </notes>
 </clause>
@@ -274,6 +275,12 @@
 <linesub end="10271" start="10133">responder answering for a particular "unique" resource record set,</linesub>
 <linesub end="10332" start="10206">but such cooperating responders MUST give answers containing</linesub>
 <linesub end="10376" start="10273">identical rdata for these records.</linesub>
+<notes>
+    <note>Identical records are not conflicts:</note>
+    <ref type="clause" target="s9_p1_c2" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_response" line="606" />
+    <note type="todo">Untested</note>
+</notes>
 </clause>
 <clause id="s2_p8_c4" num="4">
 <linesub end="10405" start="10309">If they do not give answers</linesub>
@@ -351,6 +358,10 @@
 <linesub end="12367" start="12276">If this happens, the</linesub>
 <linesub end="12435" start="12300">computer (or its human user) MUST cease using the name, and SHOULD</linesub>
 <linesub end="12498" start="12370">attempt to allocate a new unique name for use on that link.</linesub>
+<notes>
+    <note>Detailed requirements elsewhere:</note>
+    <ref target="s9_p6" />
+</notes>
 </clause>
 <clause id="s3_p2_c6" num="6">
 <linesub end="12505" start="12431">These</linesub>
@@ -379,6 +390,9 @@
 <linesub end="13234" start="13099">Any DNS query for a name ending with ".local." MUST be sent to the</linesub>
 <linesub end="13298" start="13169">mDNS IPv4 link-local multicast address 224.0.0.251 (or its IPv6</linesub>
 <linesub end="13321" start="13236">equivalent FF02::FB).</linesub>
+<notes>
+    <note type="todo">A high-level resolver encapsulating both DNS and mDNS would be useful.</note>
+</notes>
 </clause>
 <clause id="s3_p4_c2" num="2">
 <linesub end="13361" start="13259">The design rationale for using a fixed</linesub>
@@ -511,6 +525,10 @@
 <linesub end="17200" start="17064">Any DNS query for a name ending with "254.169.in-addr.arpa." MUST</linesub>
 <linesub end="17272" start="17136">be sent to the mDNS IPv4 link-local multicast address 224.0.0.251</linesub>
 <linesub end="17321" start="17208">or the mDNS IPv6 multicast address FF02::FB.</linesub>
+<notes>
+    <note type="todo">High-level resolver mentioned previously:</note>
+    <ref target="s3_p4_c1"/>
+</notes>
 </clause>
 <clause id="s4_p2_c2" num="2">
 <linesub end="17340" start="17254">Since names under</linesub>
@@ -527,6 +545,10 @@
 <linesub end="17869" start="17733">"9.e.f.ip6.arpa.", "a.e.f.ip6.arpa.", and "b.e.f.ip6.arpa.") MUST</linesub>
 <linesub end="17941" start="17805">be sent to the mDNS IPv6 link-local multicast address FF02::FB or</linesub>
 <linesub end="17993" start="17877">the mDNS IPv4 link-local multicast address 224.0.0.251.</linesub>
+<notes>
+    <note type="todo">High-level resolver mentioned previously:</note>
+    <ref target="s3_p4_c1"/>
+</notes>
 </clause>
 </paragraph>
 
@@ -550,6 +572,11 @@
 <linesub end="18523" start="18386">Multicast DNS responder MUST also implement a Multicast DNS querier</linesub>
 <linesub end="18598" start="18457">so that it can first verify the uniqueness of those records before it</linesub>
 <linesub end="18601" start="18530">begins answering queries for them.</linesub>
+<notes>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="probe_forever" line="344" />
+    <note>Detailed requirements elsewhere:</note>
+    <ref type="section" target="s8.1" />
+</notes>
 </clause>
 </paragraph>
 
@@ -589,6 +616,9 @@
 <linesub end="19650" start="19519">these queries MUST NOT be sent using UDP source port 5353, since</linesub>
 <linesub end="19726" start="19587">using UDP source port 5353 signals the presence of a fully compliant</linesub>
 <linesub end="19746" start="19659">Multicast DNS querier, as described below.</linesub>
+<notes>
+    <note>A legacy mDNS resolver is not needed now that we have a real resolver.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -702,6 +732,9 @@
 <linesub end="23297" start="23156">successive queries MUST increase by at least a factor of two, and the</linesub>
 <linesub end="23366" start="23229">querier MUST implement Known-Answer Suppression, as described below</linesub>
 <linesub end="23532" start="23453">in Section 7.1.</linesub>
+<notes>
+    <note type="todo">Continuous mDNS queries may be useful in future.</note>
+</notes>
 </clause>
 <clause id="s5.2_p3_c2" num="2">
 <linesub end="23578" start="23470">The Known-Answer Suppression mechanism tells</linesub>
@@ -783,6 +816,10 @@
 <linesub end="25874" start="25773">A Multicast DNS querier MUST NOT</linesub>
 <linesub end="25948" start="25809">perform this cache maintenance for records for which it has no local</linesub>
 <linesub end="25979" start="25881">clients with an active interest.</linesub>
+<notes>
+    <note type="todo">Continuous querying mentioned previously:</note>
+    <ref target="s5.2_p3"/>
+</notes>
 </clause>
 <clause id="s5.2_p6_c5" num="5">
 <linesub end="26010" start="25915">If the expiry of a particular</linesub>
@@ -831,6 +868,10 @@
 <linesub end="27678" start="27537">listen for Multicast DNS replies sent to UDP destination port 5353 at</linesub>
 <linesub end="27745" start="27610">the mDNS link-local multicast address (224.0.0.251 and/or its IPv6</linesub>
 <linesub end="27725" start="27680">equivalent FF02::FB).</linesub>
+<notes>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="connect_to_resolver" line="89" />
+    <note>Mirage implicitly listens on all IP addresses.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1054,6 +1095,9 @@
 <linesub end="34215" start="34074">records from its cache, which have been learned from other responders</linesub>
 <linesub end="34286" start="34147">on the network, in the Resource Record Sections of outgoing response</linesub>
 <linesub end="34300" start="34219">messages.</linesub>
+<notes>
+    <note type="todo">This requirement will be relevant later if caching is implemented.</note>
+</notes>
 </clause>
 <clause id="s6_p1_c4" num="4">
 <linesub end="34360" start="34230">Only an authoritative source for a given record is allowed</linesub>
@@ -1074,6 +1118,10 @@
 <linesub end="34837" start="34706">As with Unicast DNS, generally only DNS class 1 ("Internet")</linesub>
 <linesub end="34903" start="34770">is used, but should client software use classes other than 1, the</linesub>
 <linesub end="34930" start="34839">matching rules described above MUST be used.</linesub>
+<notes>
+    <note type="todo">It seems that Dns.Query ignores q_class, which is incorrect.</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="lookup_multiple" line="452" />
+</notes>
 </clause>
 </paragraph>
 
@@ -1082,17 +1130,28 @@
 <linesub end="35177" start="35040">A Multicast DNS responder MUST only respond when it has a positive,</linesub>
 <linesub end="35236" start="35111">non-null response to send, or it authoritatively knows that a</linesub>
 <linesub end="35281" start="35176">particular record does not exist.</linesub>
+<notes>
+    <note>No answer is added to the response when NXDomain. No response is sent when no answers are available:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="process_query" line="517" />
+    <note type="todo">Tested only indirectly by unit tests.</note>
+</notes>
 </clause>
 <clause id="s6_p3_c2" importance="must" num="2">
 <linesub end="35317" start="35211">For unique records, where the host</linesub>
 <linesub end="35384" start="35249">has already established sole ownership of the name, it MUST return</linesub>
 <linesub end="35456" start="35319">negative answers to queries for records that it knows not to exist.</linesub>
+<notes>
+    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).
+</notes>
 </clause>
 <clause id="s6_p3_c3" importance="must" num="3">
 <linesub end="35519" start="35390">For example, a host with no IPv6 address, that has claimed sole</linesub>
 <linesub end="35596" start="35457">ownership of the name "host.local." for all rrtypes, MUST respond to</linesub>
 <linesub end="35650" start="35529">AAAA queries for "host.local." by sending a negative answer</linesub>
 <linesub end="35712" start="35592">indicating that no AAAA records exist for that name.</linesub>
+<notes>
+    <note type="todo">Negative answers not yet implemented (no knowledge of absence of AAAA records).
+</notes>
 </clause>
 <clause id="s6_p3_c4" num="4">
 <linesub end="35725" start="35646">See Section</linesub>
@@ -1107,6 +1166,10 @@
 <clause id="s6_p3_c6" importance="must" num="6">
 <linesub end="36012" start="35912">For shared records, NXDOMAIN and</linesub>
 <linesub end="36029" start="35948">other error responses MUST NOT be sent.</linesub>
+<notes>
+    <note>See description of NXDomain behaviour above.</note>
+    <ref target="s6_p3_c1"/>
+</notes>
 </clause>
 </paragraph>
 
