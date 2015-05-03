@@ -4,6 +4,7 @@
 # - http://www.ietf.org/proceedings/62/slides/editor-0.pdf
 # - https://tools.ietf.org/html/rfc2026
 
+import hashlib
 import re
 import xml.etree.ElementTree as etree
 
@@ -335,8 +336,9 @@ class Section:
 
 
 class Document:
-    def __init__(self, text):
+    def __init__(self, text, sha1=None):
         self.text = text
+        self.sha1 = sha1
         self.lines = []
         self.header = {}
         self.rfc_number = None
@@ -348,6 +350,8 @@ class Document:
                 number=str(self.rfc_number),
                 title=self.title,
                 )
+        if self.sha1:
+            root.attrib['sha1'] = self.sha1
 
         root.text = '\n'
         header_elem = etree.Element('header')
@@ -453,8 +457,8 @@ def split_lines(doc, text):
         line_num += 1
 
 
-def parse(text):
-    doc = Document(text)
+def parse(text, sha1):
+    doc = Document(text, sha1)
     lines = list(split_lines(doc, text))
     doc.lines = lines
     num_lines = len(lines)
@@ -538,7 +542,9 @@ def parse(text):
 
 def parse_path(path):
     with open(path, 'rb') as f:
-        doc = parse(f.read().decode('us-ascii'))
+        data = f.read()
+        sha1 = hashlib.sha1(data).hexdigest()
+        doc = parse(data.decode('us-ascii'), sha1)
     return doc
 
 

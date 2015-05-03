@@ -4,6 +4,14 @@ import re
 import xml.etree.ElementTree as etree
 
 
+IMPORTANCES = [ 'must', 'should', 'may' ]
+IMPORTANCE_HEADINGS = {
+        'must': 'MUST, SHALL',
+        'should': 'SHOULD, RECOMMENDED',
+        'may': 'MAY, OPTIONAL',
+        }
+
+
 class ParseException(Exception):
     pass
 
@@ -65,8 +73,8 @@ def ref_as_element(ref):
 def notes_as_element(note, target_id):
     elem = etree.Element('div')
     if target_id:
-        elem.attrib['onmouseover'] = "addClass(document.getElementById('{0}'), 'hover')".format(target_id)
-        elem.attrib['onmouseout'] = "removeClass(document.getElementById('{0}'), 'hover')".format(target_id)
+        elem.set('onmouseover', "addClass(document.getElementById('{0}'), 'hover')".format(target_id))
+        elem.set('onmouseout', "removeClass(document.getElementById('{0}'), 'hover')".format(target_id))
     elem.set('class', 'notes')
     elem.text = '\n'
     for child in note:
@@ -82,7 +90,11 @@ def notes_as_element(note, target_id):
 
 def clause_as_element(clause):
     elem = etree.Element('div')
-    elem.set('id', clause.get('id'))
+    id = clause.get('id')
+    if id:
+        elem.set('id', id)
+        anchor = etree.Element('a', name=id)
+        elem.append(anchor)
     css_class = 'clause'
     importance = clause.get('importance')
     if importance:
@@ -90,7 +102,7 @@ def clause_as_element(clause):
     elem.set('class', css_class)
     label = etree.Element('span')
     label.set('class', 'label')
-    label.text = clause.get('id')
+    label.text = id
     elem.append(label)
     label.tail = ' '.join(sub.text for sub in clause.findall('linesub'))
     elem.tail = '\n'
@@ -145,6 +157,57 @@ def section_as_elements(section):
     return elements
 
 
+def table_of_clauses(clauses):
+    table = etree.Element('table')
+    table.set('class', 'index')
+    thead = etree.SubElement(table, 'thead')
+    head_tr = etree.SubElement(thead, 'tr')
+    for heading in ['Clause', 'Notes', 'Impl', 'Test']:
+        th = etree.SubElement(head_tr, 'th')
+        th.text = heading
+
+    tbody = etree.SubElement(table, 'tbody')
+    for clause in clauses:
+        tr = etree.SubElement(tbody, 'tr')
+        td_id = etree.SubElement(tr, 'td')
+        id = clause.get('id')
+        if id:
+            a = etree.SubElement(td_id, 'a', href='#' + id)
+            a.text = id
+        else:
+            td_id.text = id
+        td_notes = etree.SubElement(tr, 'td')
+        if clause.find('notes'):
+            td_notes.text = 'Yes'
+            #import pdb; pdb.set_trace()
+        td_impl = etree.SubElement(tr, 'td')
+        impl = clause.findall(".//coderef[@type='impl']")
+        if impl:
+            td_impl.text = 'Yes'
+        td_test = etree.SubElement(tr, 'td')
+        test = clause.findall(".//coderef[@type='test']")
+        if test:
+            td_test.text = 'Yes'
+    return table
+
+
+def index_clauses(root):
+    h1 = etree.Element('h1')
+    h1.text = 'Index of Clauses'
+    h1.tail = '\n\n'
+    anchor = etree.Element('a', name='index_of_clauses')
+    elements = [h1, anchor]
+    for importance in IMPORTANCES:
+        clauses = root.findall(".//clause[@importance='{0}']".format(importance))
+        if clauses:
+            h2 = etree.Element('h2')
+            h2.text = IMPORTANCE_HEADINGS[importance]
+            h2.tail = '\n\n'
+            elements.append(h2)
+            elements.append(table_of_clauses(clauses))
+    return elements
+
+
 def root_as_html(xml):
     root = etree.Element('html',
             xmlns='http://www.w3.org/1999/xhtml')
@@ -169,13 +232,16 @@ def root_as_html(xml):
     body = etree.Element('body')
     body.text = '\n'
     
-    h = etree.Element('h1')
-    h.text = title
-    body.append(h)
+    p_links = etree.SubElement(body, 'p')
+    p_links.text = 'Jump to: '
+    etree.SubElement(p_links, 'a', href='#index_of_clauses').text = 'Index of Clauses'
+
+    etree.SubElement(body, 'h1').text = title
 
     sections = xml.find('sections')
     for section in sections.findall('section'):
         body.extend(section_as_elements(section))
+    body.extend(index_clauses(xml))
     body.tail = '\n'
     root.append(body)
 
