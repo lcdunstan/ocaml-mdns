@@ -177,10 +177,18 @@
 <div class="clause" id="s2_p8_c1"><a name="s2_p8_c1" /><span class="label">s2_p8_c1</span>A "unique" resource record set is one where all the records with that name, rrtype, and rrclass are conceptually under the control or ownership of a single responder, and it is expected that at most one responder should respond to a query for that name, rrtype, and rrclass.</div>
 <div class="clause must" id="s2_p8_c2"><a name="s2_p8_c2" /><span class="label">s2_p8_c2</span>Before claiming ownership of a unique resource record set, a responder MUST probe to verify that no other responder already claims ownership of that set, as described in Section 8.1, "Probing".</div>
 <div class="notes" onmouseout="removeClass(document.getElementById('s2_p8_c2'), 'hover')" onmouseover="addClass(document.getElementById('s2_p8_c2'), 'hover')">
+<div class="note">Detailed requirements elsewhere:</div>
 <div class="ref">See <a href="#s8.1">s8.1</a></div>
 </div>
 
 <div class="clause must" id="s2_p8_c3"><a name="s2_p8_c3" /><span class="label">s2_p8_c3</span>(For fault-tolerance and other reasons, sometimes it is permissible to have more than one responder answering for a particular "unique" resource record set, but such cooperating responders MUST give answers containing identical rdata for these records.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s2_p8_c3'), 'hover')" onmouseover="addClass(document.getElementById('s2_p8_c3'), 'hover')">
+<div class="note">Identical records are not conflicts:</div>
+<div class="ref">See <a href="#s9_p1_c2">s9_p1_c2</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l606">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l606</a></div>
+<div class="note">Untested</div>
+</div>
+
 <div class="clause" id="s2_p8_c4"><a name="s2_p8_c4" /><span class="label">s2_p8_c4</span>If they do not give answers containing identical rdata, then the probing step will reject the data as being inconsistent with what is already being advertised on the network for those names.)</div>
 </div>
 
@@ -205,6 +213,11 @@
 <div class="clause" id="s3_p2_c3"><a name="s3_p2_c3" /><span class="label">s3_p2_c3</span>Any computer user is granted the authority to name their computer this way, provided that the chosen host name is not already in use on that link.</div>
 <div class="clause" id="s3_p2_c4"><a name="s3_p2_c4" /><span class="label">s3_p2_c4</span>Having named their computer this way, the user has the authority to continue utilizing that name until such time as a name conflict occurs on the link that is not resolved in the user's favor.</div>
 <div class="clause must" id="s3_p2_c5"><a name="s3_p2_c5" /><span class="label">s3_p2_c5</span>If this happens, the computer (or its human user) MUST cease using the name, and SHOULD attempt to allocate a new unique name for use on that link.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s3_p2_c5'), 'hover')" onmouseover="addClass(document.getElementById('s3_p2_c5'), 'hover')">
+<div class="note">Detailed requirements elsewhere:</div>
+<div class="ref">See <a href="#s9_p6">s9_p6</a></div>
+</div>
+
 <div class="clause" id="s3_p2_c6"><a name="s3_p2_c6" /><span class="label">s3_p2_c6</span>These conflicts are expected to be relatively rare for people who choose reasonably imaginative names, but it is still important to have a mechanism in place to handle them when they happen.</div>
 </div>
 
@@ -215,6 +228,10 @@
 
 <div class="paragraph" id="s3_p4">
 <div class="clause must" id="s3_p4_c1"><a name="s3_p4_c1" /><span class="label">s3_p4_c1</span>Any DNS query for a name ending with ".local." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 (or its IPv6 equivalent FF02::FB).</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s3_p4_c1'), 'hover')" onmouseover="addClass(document.getElementById('s3_p4_c1'), 'hover')">
+<div class="note">A high-level resolver encapsulating both DNS and mDNS would be useful.</div>
+</div>
+
 <div class="clause" id="s3_p4_c2"><a name="s3_p4_c2" /><span class="label">s3_p4_c2</span>The design rationale for using a fixed multicast address instead of selecting from a range of multicast addresses using a hash function is discussed in Appendix B.</div>
 <div class="clause may" id="s3_p4_c3"><a name="s3_p4_c3" /><span class="label">s3_p4_c3</span>Implementers MAY choose to look up such names concurrently via other mechanisms (e.g., Unicast DNS) and coalesce the results in some fashion.</div>
 <div class="clause" id="s3_p4_c4"><a name="s3_p4_c4" /><span class="label">s3_p4_c4</span>Implementers choosing to do this should be aware of the potential for user confusion when a given name can produce different results depending on external network conditions (such as, but not limited to, which name lookup mechanism responds faster).</div>
@@ -256,11 +273,21 @@
 
 <div class="paragraph" id="s4_p2">
 <div class="clause must" id="s4_p2_c1"><a name="s4_p2_c1" /><span class="label">s4_p2_c1</span>Any DNS query for a name ending with "254.169.in-addr.arpa." MUST be sent to the mDNS IPv4 link-local multicast address 224.0.0.251 or the mDNS IPv6 multicast address FF02::FB.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s4_p2_c1'), 'hover')" onmouseover="addClass(document.getElementById('s4_p2_c1'), 'hover')">
+<div class="note">High-level resolver mentioned previously:</div>
+<div class="ref">See <a href="#s3_p4_c1">s3_p4_c1</a></div>
+</div>
+
 <div class="clause" id="s4_p2_c2"><a name="s4_p2_c2" /><span class="label">s4_p2_c2</span>Since names under this domain correspond to IPv4 link-local addresses, it is logical that the local link is the best place to find information pertaining to those names.</div>
 </div>
 
 <div class="paragraph" id="s4_p3">
 <div class="clause must" id="s4_p3_c1"><a name="s4_p3_c1" /><span class="label">s4_p3_c1</span>Likewise, any DNS query for a name within the reverse mapping domains for IPv6 link-local addresses ("8.e.f.ip6.arpa.", "9.e.f.ip6.arpa.", "a.e.f.ip6.arpa.", and "b.e.f.ip6.arpa.") MUST be sent to the mDNS IPv6 link-local multicast address FF02::FB or the mDNS IPv4 link-local multicast address 224.0.0.251.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s4_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s4_p3_c1'), 'hover')">
+<div class="note">High-level resolver mentioned previously:</div>
+<div class="ref">See <a href="#s3_p4_c1">s3_p4_c1</a></div>
+</div>
+
 </div>
 
 <h2 id="s5">5 Querying</h2>
@@ -271,6 +298,12 @@
 
 <div class="paragraph" id="s5_p2">
 <div class="clause must" id="s5_p2_c1"><a name="s5_p2_c1" /><span class="label">s5_p2_c1</span>Except in the rare case of a Multicast DNS responder that is advertising only shared resource records and no unique records, a Multicast DNS responder MUST also implement a Multicast DNS querier so that it can first verify the uniqueness of those records before it begins answering queries for them.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s5_p2_c1'), 'hover')" onmouseover="addClass(document.getElementById('s5_p2_c1'), 'hover')">
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l344">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l344</a></div>
+<div class="note">Detailed requirements elsewhere:</div>
+<div class="ref">See <a href="#s8.1">s8.1</a></div>
+</div>
+
 </div>
 
 <h2 id="s5.1">5.1 One-Shot Multicast DNS Queries</h2>
@@ -282,6 +315,10 @@
 <div class="clause" id="s5.1_p1_c4"><a name="s5.1_p1_c4" /><span class="label">s5.1_p1_c4</span>Typically, the timeout would also be shortened to two or three seconds.</div>
 <div class="clause" id="s5.1_p1_c5"><a name="s5.1_p1_c5" /><span class="label">s5.1_p1_c5</span>It's possible to make a minimal Multicast DNS resolver with only these simple changes.</div>
 <div class="clause must" id="s5.1_p1_c6"><a name="s5.1_p1_c6" /><span class="label">s5.1_p1_c6</span>These queries are typically done using a high-numbered ephemeral UDP source port, but regardless of whether they are sent from a dynamic port or from a fixed port, these queries MUST NOT be sent using UDP source port 5353, since using UDP source port 5353 signals the presence of a fully compliant Multicast DNS querier, as described below.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s5.1_p1_c6'), 'hover')" onmouseover="addClass(document.getElementById('s5.1_p1_c6'), 'hover')">
+<div class="note">A legacy mDNS resolver is not needed now that we have a real resolver.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s5.1_p2">
@@ -316,6 +353,10 @@
 
 <div class="paragraph" id="s5.2_p3">
 <div class="clause must" id="s5.2_p3_c1"><a name="s5.2_p3_c1" /><span class="label">s5.2_p3_c1</span>Therefore, when retransmitting Multicast DNS queries to implement this kind of continuous monitoring, the interval between the first two queries MUST be at least one second, the intervals between successive queries MUST increase by at least a factor of two, and the querier MUST implement Known-Answer Suppression, as described below in Section 7.1.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s5.2_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s5.2_p3_c1'), 'hover')">
+<div class="note">Continuous mDNS queries may be useful in future.</div>
+</div>
+
 <div class="clause" id="s5.2_p3_c2"><a name="s5.2_p3_c2" /><span class="label">s5.2_p3_c2</span>The Known-Answer Suppression mechanism tells responders which answers are already known to the querier, thereby allowing responders to avoid wasting network capacity with pointless repeated transmission of those answers.</div>
 <div class="clause" id="s5.2_p3_c3"><a name="s5.2_p3_c3" /><span class="label">s5.2_p3_c3</span>A querier retransmits its question because it wishes to receive answers it may have missed the first time, not because it wants additional duplicate copies of answers it already received.</div>
 <div class="clause" id="s5.2_p3_c4"><a name="s5.2_p3_c4" /><span class="label">s5.2_p3_c4</span>Failure to implement Known-Answer Suppression can result in unacceptable levels of network traffic.</div>
@@ -339,6 +380,11 @@
 <div class="clause" id="s5.2_p6_c2"><a name="s5.2_p6_c2" /><span class="label">s5.2_p6_c2</span>If an answer is received, then the remaining TTL is reset to the value given in the answer, and this process repeats for as long as the Multicast DNS querier has an ongoing interest in the record.</div>
 <div class="clause" id="s5.2_p6_c3"><a name="s5.2_p6_c3" /><span class="label">s5.2_p6_c3</span>If no answer is received after four queries, the record is deleted when it reaches 100% of its lifetime.</div>
 <div class="clause must" id="s5.2_p6_c4"><a name="s5.2_p6_c4" /><span class="label">s5.2_p6_c4</span>A Multicast DNS querier MUST NOT perform this cache maintenance for records for which it has no local clients with an active interest.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s5.2_p6_c4'), 'hover')" onmouseover="addClass(document.getElementById('s5.2_p6_c4'), 'hover')">
+<div class="note">Continuous querying mentioned previously:</div>
+<div class="ref">See <a href="#s5.2_p3">s5.2_p3</a></div>
+</div>
+
 <div class="clause" id="s5.2_p6_c5"><a name="s5.2_p6_c5" /><span class="label">s5.2_p6_c5</span>If the expiry of a particular record from the cache would result in no net effect to any client software running on the querier device, and no visible effect to the human user, then there is no reason for the Multicast DNS querier to waste network capacity checking whether the record remains valid.</div>
 </div>
 
@@ -354,6 +400,11 @@
 
 <div class="paragraph" id="s5.2_p9">
 <div class="clause must" id="s5.2_p9_c1"><a name="s5.2_p9_c1" /><span class="label">s5.2_p9_c1</span>A compliant Multicast DNS querier, which implements the rules specified in this document, MUST send its Multicast DNS queries from UDP source port 5353 (the well-known port assigned to mDNS), and MUST listen for Multicast DNS replies sent to UDP destination port 5353 at the mDNS link-local multicast address (224.0.0.251 and/or its IPv6 equivalent FF02::FB).</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s5.2_p9_c1'), 'hover')" onmouseover="addClass(document.getElementById('s5.2_p9_c1'), 'hover')">
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l89">https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l89</a></div>
+<div class="note">Mirage implicitly listens on all IP addresses.</div>
+</div>
+
 </div>
 
 <h2 id="s5.3">5.3 Multiple Questions per Query</h2>
@@ -428,21 +479,49 @@
 <div class="clause" id="s6_p1_c1"><a name="s6_p1_c1" /><span class="label">s6_p1_c1</span>When a Multicast DNS responder constructs and sends a Multicast DNS response message, the Resource Record Sections of that message must contain only records for which that responder is explicitly authoritative.</div>
 <div class="clause" id="s6_p1_c2"><a name="s6_p1_c2" /><span class="label">s6_p1_c2</span>These answers may be generated because the record answers a question received in a Multicast DNS query message, or at certain other times that the responder determines than an unsolicited announcement is warranted.</div>
 <div class="clause must" id="s6_p1_c3"><a name="s6_p1_c3" /><span class="label">s6_p1_c3</span>A Multicast DNS responder MUST NOT place records from its cache, which have been learned from other responders on the network, in the Resource Record Sections of outgoing response messages.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p1_c3'), 'hover')" onmouseover="addClass(document.getElementById('s6_p1_c3'), 'hover')">
+<div class="note">This requirement will be relevant later if caching is implemented.</div>
+</div>
+
 <div class="clause" id="s6_p1_c4"><a name="s6_p1_c4" /><span class="label">s6_p1_c4</span>Only an authoritative source for a given record is allowed to issue responses containing that record.</div>
 </div>
 
 <div class="paragraph" id="s6_p2">
 <div class="clause" id="s6_p2_c1"><a name="s6_p2_c1" /><span class="label">s6_p2_c1</span>The determination of whether a given record answers a given question is made using the standard DNS rules: the record name must match the question name, the record rrtype must match the question qtype unless the qtype is "ANY" (255) or the rrtype is "CNAME" (5), and the record rrclass must match the question qclass unless the qclass is "ANY" (255).</div>
 <div class="clause must" id="s6_p2_c2"><a name="s6_p2_c2" /><span class="label">s6_p2_c2</span>As with Unicast DNS, generally only DNS class 1 ("Internet") is used, but should client software use classes other than 1, the matching rules described above MUST be used.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p2_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6_p2_c2'), 'hover')">
+<div class="note">It seems that Dns.Query ignores q_class, which is incorrect.</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l452">https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l452</a></div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6_p3">
 <div class="clause must" id="s6_p3_c1"><a name="s6_p3_c1" /><span class="label">s6_p3_c1</span>A Multicast DNS responder MUST only respond when it has a positive, non-null response to send, or it authoritatively knows that a particular record does not exist.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p3_c1'), 'hover')">
+<div class="note">No answer is added to the response when NXDomain. No response is sent when no answers are available:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l517">https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l517</a></div>
+<div class="note">Tested only indirectly by unit tests.</div>
+</div>
+
 <div class="clause must" id="s6_p3_c2"><a name="s6_p3_c2" /><span class="label">s6_p3_c2</span>For unique records, where the host has already established sole ownership of the name, it MUST return negative answers to queries for records that it knows not to exist.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p3_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6_p3_c2'), 'hover')">
+<div class="note">Negative answers not yet implemented (no knowledge of absence of AAAA records).</div>
+</div>
+
 <div class="clause must" id="s6_p3_c3"><a name="s6_p3_c3" /><span class="label">s6_p3_c3</span>For example, a host with no IPv6 address, that has claimed sole ownership of the name "host.local." for all rrtypes, MUST respond to AAAA queries for "host.local." by sending a negative answer indicating that no AAAA records exist for that name.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p3_c3'), 'hover')" onmouseover="addClass(document.getElementById('s6_p3_c3'), 'hover')">
+<div class="note">Negative answers not yet implemented (no knowledge of absence of AAAA records).</div>
+</div>
+
 <div class="clause" id="s6_p3_c4"><a name="s6_p3_c4" /><span class="label">s6_p3_c4</span>See Section 6.1, "Negative Responses".</div>
 <div class="clause" id="s6_p3_c5"><a name="s6_p3_c5" /><span class="label">s6_p3_c5</span>For shared records, which are owned by no single host, the nonexistence of a given record is ascertained by the failure of any machine to respond to the Multicast DNS query, not by any explicit negative response.</div>
 <div class="clause must" id="s6_p3_c6"><a name="s6_p3_c6" /><span class="label">s6_p3_c6</span>For shared records, NXDOMAIN and other error responses MUST NOT be sent.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p3_c6'), 'hover')" onmouseover="addClass(document.getElementById('s6_p3_c6'), 'hover')">
+<div class="note">See description of NXDomain behaviour above.</div>
+<div class="ref">See <a href="#s6_p3_c1">s6_p3_c1</a></div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6_p4">
@@ -2412,22 +2491,22 @@
 <table class="index"><thead>
 <tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th></tr></thead><tbody>
 <tr><td><a href="#s2_p8_c2">s2_p8_c2</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s2_p8_c3">s2_p8_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s3_p2_c5">s3_p2_c5</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s3_p4_c1">s3_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s4_p2_c1">s4_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s4_p3_c1">s4_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5_p2_c1">s5_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.1_p1_c6">s5.1_p1_c6</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p3_c1">s5.2_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p6_c4">s5.2_p6_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p9_c1">s5.2_p9_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p1_c3">s6_p1_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p2_c2">s6_p2_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p3_c1">s6_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p3_c2">s6_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p3_c3">s6_p3_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p3_c6">s6_p3_c6</a></td><td /><td /><td /></tr>
+<tr><td><a href="#s2_p8_c3">s2_p8_c3</a></td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s3_p2_c5">s3_p2_c5</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s3_p4_c1">s3_p4_c1</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s4_p2_c1">s4_p2_c1</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s4_p3_c1">s4_p3_c1</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s5_p2_c1">s5_p2_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s5.1_p1_c6">s5.1_p1_c6</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s5.2_p3_c1">s5.2_p3_c1</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s5.2_p6_c4">s5.2_p6_c4</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s5.2_p9_c1">s5.2_p9_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s6_p1_c3">s6_p1_c3</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s6_p2_c2">s6_p2_c2</a></td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s6_p3_c1">s6_p3_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s6_p3_c2">s6_p3_c2</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s6_p3_c3">s6_p3_c3</a></td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s6_p3_c6">s6_p3_c6</a></td><td>Yes</td><td /><td /></tr>
 <tr><td><a href="#s6_p4_c1">s6_p4_c1</a></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
 <tr><td><a href="#s6_p4_c2">s6_p4_c2</a></td><td>Yes</td><td>Yes</td><td /></tr>
 <tr><td><a href="#s6_p11_c1">s6_p11_c1</a></td><td /><td /><td /></tr>
