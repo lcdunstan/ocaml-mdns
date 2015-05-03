@@ -1,4 +1,8 @@
 
+body {
+    font-family: sans-serif;
+}
+
 div.paragraph {
     margin-bottom: 10px;
 }
@@ -8,6 +12,7 @@ div.clause {
 }
 
 .label {
+    font-size: 80%;
     display: inline-block;
     background-color: #75df67;
     border: solid 1px black;
@@ -38,7 +43,7 @@ div.notes {
     color: red;
 }
 
-table.index {
+table {
     border: solid 1px black;
     border-collapse: collapse;
 }
