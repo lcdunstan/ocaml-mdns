@@ -1309,11 +1309,21 @@
 <clause id="s6_p11_c1" importance="must" num="1">
 <linesub end="39992" start="39853">The source UDP port in all Multicast DNS responses MUST be 5353 (the</linesub>
 <linesub end="40027" start="39925">well-known port assigned to mDNS).</linesub>
+<notes>
+    <note>This is the responsibility of the Transport provided by the caller, as per the example program:</note>
+    <coderef type="impl" repo="dns" path="lib_test/mirage-mdns/unikernel.ml" line="33" />
+</notes>
 </clause>
 <clause id="s6_p11_c2" importance="must" num="2">
 <linesub end="40058" start="39961">Multicast DNS implementations</linesub>
 <linesub end="40131" start="39994">MUST silently ignore any Multicast DNS responses they receive where</linesub>
 <linesub end="40132" start="40065">the source UDP port is not 5353.</linesub>
+<notes>
+    <note>The resolver is correct:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="callback" line="92" />
+    <note type="todo">Not implemented properly in the responder probe module:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" line="586" />
+</notes>
 </clause>
 </paragraph>
 
@@ -1324,6 +1334,13 @@
 <linesub end="40380" start="40239">multicast address 224.0.0.251 or its IPv6 equivalent FF02::FB, except</linesub>
 <linesub end="40439" start="40312">when generating a reply to a query that explicitly requested a</linesub>
 <linesub end="40415" start="40378">unicast response:</linesub>
+<notes>
+    <note>For announcements:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="announce" line="429" />
+    <note>For query replies:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_query" line="529" />
+    <note type="todo">IPv6 not yet implemented.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1340,6 +1357,9 @@
 <linesub end="40691" start="40550">Except for these three specific cases, responses MUST NOT be sent via</linesub>
 <linesub end="40744" start="40623">unicast, because then the "Passive Observation of Failures"</linesub>
 <linesub end="40820" start="40686">mechanisms described in Section 10.5 would not work correctly.</linesub>
+<notes>
+    <note>OK, see above.</note>
+</notes>
 </clause>
 <clause id="s6_p14_c2" num="2">
 <linesub end="40827" start="40750">Other</linesub>
@@ -1350,10 +1370,17 @@
 <linesub end="41119" start="40990">A Multicast DNS querier MUST only accept unicast responses if</linesub>
 <linesub end="41188" start="41055">they answer a recently sent query (e.g., sent within the last two</linesub>
 <linesub end="41246" start="41124">seconds) that explicitly requested unicast responses.</linesub>
+<notes>
+    <note type="todo">Destination IP address currently ignored:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="callback" line="90" />
+</notes>
 </clause>
 <clause id="s6_p14_c4" importance="must" num="4">
 <linesub end="41259" start="41179">A Multicast</linesub>
 <linesub end="41319" start="41194">DNS querier MUST silently ignore all other unicast responses.</linesub>
+<notes>
+    <note type="todo">See the previous clause.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1365,6 +1392,9 @@
 <linesub end="41610" start="41473">a record on a given interface until at least one second has elapsed</linesub>
 <linesub end="41675" start="41544">since the last time that record was multicast on that particular</linesub>
 <linesub end="41693" start="41612">interface.</linesub>
+<notes>
+    <note type="todo">Rate limit not implemented yet.</note>
+</notes>
 </clause>
 <clause id="s6_p15_c2" num="2">
 <linesub end="41751" start="41624">A legitimate querier on the network should have seen the</linesub>
@@ -1380,6 +1410,9 @@
 <linesub end="42025" start="41890">probe queries, because of the limited time before the probing host</linesub>
 <linesub end="42087" start="41960">will make its decision about whether or not to use the name, a</linesub>
 <linesub end="42141" start="42026">Multicast DNS responder MUST respond quickly.</linesub>
+<notes>
+    <note>Currently no delay for probe queries.</note>
+</notes>
 </clause>
 <clause id="s6_p15_c5" num="5">
 <linesub end="42163" start="42073">In this special case</linesub>
@@ -1387,6 +1420,9 @@
 <linesub end="42303" start="42164">responder is only required to delay its transmission as necessary to</linesub>
 <linesub end="42375" start="42236">ensure an interval of at least 250 ms since the last time the record</linesub>
 <linesub end="42375" start="42308">was multicast on that interface.</linesub>
+<notes>
+    <note type="todo">Rate limit not implemented yet.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1445,6 +1481,9 @@
 <linesub end="44144" start="44005">records, the responder MUST (except as allowed in (a) below) respond</linesub>
 <linesub end="44210" start="44077">asserting the nonexistence of that record using a DNS NSEC record</linesub>
 <linesub end="44228" start="44146">[RFC4034].</linesub>
+<notes>
+    <note type="todo">NSEC not implemented.</note>
+</notes>
 </clause>
 <clause id="s6.1_p3_c2" num="2">
 <linesub end="44287" start="44158">In the case of Multicast DNS the NSEC record is not being</linesub>
@@ -1475,11 +1514,17 @@
 <linesub end="45010" start="44888">To facilitate use by devices with limited memory and CPU</linesub>
 <linesub end="45081" start="44948">resources, Multicast DNS queriers are only REQUIRED to be able to</linesub>
 <linesub end="45129" start="45017">parse a restricted form of the DNS NSEC record.</linesub>
+<notes>
+    <note type="todo">NSEC not implemented.</note>
+</notes>
 </clause>
 <clause id="s6.1_p5_c3" importance="must" num="3">
 <linesub end="45144" start="45066">All compliant</linesub>
 <linesub end="45218" start="45083">Multicast DNS implementations MUST at least correctly generate and</linesub>
 <linesub end="45276" start="45153">parse the restricted DNS NSEC record format described below:</linesub>
+<notes>
+    <note type="todo">NSEC not implemented.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1525,12 +1570,18 @@
 <linesub end="46054" start="45919">restricted-form NSEC records for those names, since to do so would</linesub>
 <linesub end="46120" start="45989">imply that the name has no records with rrtypes above 255, which</linesub>
 <linesub end="46143" start="46057">would be false.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 <clause id="s6.1_p10_c3" importance="must" num="3">
 <linesub end="46196" start="46074">In such cases a Multicast DNS responder MUST either</linesub>
 <linesub end="46270" start="46129">(a) emit no NSEC record for that name, or (b) emit a full NSEC record</linesub>
 <linesub end="46335" start="46202">containing the appropriate Type Bit Map block(s) with the correct</linesub>
 <linesub end="46385" start="46271">bits set for all the record types that exist.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 <clause id="s6.1_p10_c4" num="4">
 <linesub end="46406" start="46318">In practice this is</linesub>
@@ -1553,6 +1604,9 @@
 <linesub end="47149" start="47012">implementation MUST NOT reject or ignore an NSEC record it receives</linesub>
 <linesub end="47220" start="47083">just because it finds an unexpected value in the 'Next Domain Name'</linesub>
 <linesub end="47169" start="47154">field.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1568,6 +1622,9 @@
 <linesub end="47585" start="47461">A Multicast DNS implementation MUST NOT ignore an entire</linesub>
 <linesub end="47662" start="47521">message just because that message contains one or more NSEC record(s)</linesub>
 <linesub end="47715" start="47594">that the Multicast DNS implementation cannot parse.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 <clause id="s6.1_p12_c3" num="3">
 <linesub end="47731" start="47647">This provision</linesub>
@@ -1585,6 +1642,9 @@
 <linesub end="48193" start="48052">Multicast DNS NSEC records MUST NOT have the NSEC bit set in the Type</linesub>
 <linesub end="48260" start="48125">Bit Map, whereas conventional Unicast DNS NSEC records do have the</linesub>
 <linesub end="48224" start="48195">NSEC bit set.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1612,6 +1672,9 @@
 <linesub end="48859" start="48718">which it has legitimate ownership of the name, rrtype, and rrclass in</linesub>
 <linesub end="48930" start="48791">question, and can legitimately assert that no record with that name,</linesub>
 <linesub end="48961" start="48863">rrtype, and rrclass exists.</linesub>
+<notes>
+    <note>Relevant if NSEC is implemented later.</note>
+</notes>
 </clause>
 <clause id="s6.1_p15_c2" num="2">
 <linesub end="49002" start="48892">A responder can assert that a specified</linesub>
@@ -1646,6 +1709,9 @@
 <linesub end="50111" start="49974">and MUST NOT include addresses that are not valid on that interface</linesub>
 <linesub end="50170" start="50045">(such as addresses that may be configured on the host's other</linesub>
 <linesub end="50190" start="50110">interfaces).</linesub>
+<notes>
+    <note type="todo">Unique hostname records for multiple IP addresses not implemented yet.</note>
+</notes>
 </clause>
 <clause id="s6.2_p1_c2" num="2">
 <linesub end="50243" start="50124">For example, if an interface has both an IPv6 link-</linesub>
@@ -1700,6 +1766,9 @@
 <linesub end="52002" start="51865">negative IPv6 assertion in their IPv4 responses) because this would</linesub>
 <linesub end="52075" start="51936">cause incorrect operation in responders on the network that work the</linesub>
 <linesub end="52033" start="52008">former way.</linesub>
+<notes>
+    <note type="todo">Relevant later when IPv6 is implemented.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1711,6 +1780,11 @@
 <linesub end="52200" start="52067">Multicast DNS responders MUST correctly handle DNS query messages</linesub>
 <linesub end="52269" start="52136">containing more than one question, by answering any or all of the</linesub>
 <linesub end="52306" start="52205">questions to which they have answers.</linesub>
+<notes>
+    <note>OK. Multiple questions are currently answered with one reply message.</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="lookup_multiple" line="452" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_query.ml" name="answer_multiple-mdns" line="206" />
+</notes>
 </clause>
 <clause id="s6.3_p1_c2" importance="should" num="2">
 <linesub end="52330" start="52244">Unlike single-question</linesub>
@@ -1718,6 +1792,13 @@
 <linesub end="52623" start="52492">cases, for query messages containing more than one question, all</linesub>
 <linesub end="52689" start="52560">(non-defensive) answers SHOULD be randomly delayed in the range</linesub>
 <linesub end="52755" start="52627">20-120 ms, or 400-500 ms if the TC (truncated) bit is set.</linesub>
+<notes>
+    <note>OK for non-TC questions:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_delay" line="503" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="54" />
+    <note type="todo">TC bit not implemented yet.</note>
+    <note type="todo">Single vs multiple question is unclear.</note>
+</notes>
 </clause>
 <clause id="s6.3_p1_c3" num="3">
 <linesub end="52764" start="52687">This is</linesub>
@@ -1730,6 +1811,10 @@
 <linesub end="53040" start="52939">(Answers defending a name, in</linesub>
 <linesub end="53113" start="52972">response to a probe for that name, are not subject to this delay rule</linesub>
 <linesub end="53112" start="53045">and are still sent immediately.)</linesub>
+<notes>
+    <note>No delay for unique names:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_delay" line="507" />
+</notes>
 </clause>
 </paragraph>
 
@@ -1759,6 +1844,12 @@
 <linesub end="53754" start="53623">When responding to queries using qtype "ANY" (255) and/or qclass</linesub>
 <linesub end="53832" start="53691">"ANY" (255), a Multicast DNS responder MUST respond with *ALL* of its</linesub>
 <linesub end="53860" start="53764">records that match the query.</linesub>
+<notes>
+    <note>qtype "ANY" handled OK:</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="some_rrset" line="334" />
+    <note type="todo">qclass described previously:</note>
+    <ref type="clause" target="s6_p2_c2" />
+</notes>
 </clause>
 <clause id="s6.5_p1_c2" num="2">
 <linesub end="53895" start="53795">This is subtly different from how</linesub>
@@ -1833,6 +1924,10 @@
 <linesub end="55975" start="55848">When responding to queries using qtype "ANY" (255) and/or</linesub>
 <linesub end="56050" start="55909">qclass "ANY" (255), a Multicast DNS responder MUST respond with *ALL*</linesub>
 <linesub end="56057" start="55982">of its records that match the query.</linesub>
+<notes>
+    <note>See above.</note>
+    <ref type="clause" target="s6.5_p1_c1" />
+</notes>
 </clause>
 </paragraph>
 
@@ -1861,6 +1956,11 @@
 <linesub end="56681" start="56545">resource record set owned solely by that responder, then this is</linesub>
 <linesub end="56740" start="56618">a conflict and MUST be handled as described in Section 9,</linesub>
 <linesub end="56736" start="56684">"Conflict Resolution".</linesub>
+<notes>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="conflict_exists" line="597" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="probe-conflict" line="421" />
+    <note type="todo">Could be useful to have a post-probe conflict test case.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -1886,6 +1986,9 @@
 <linesub end="57276" start="57142">o If the TTL of B's resource record given in the message is less</linesub>
 <linesub end="57349" start="57215">than half the true TTL from A's point of view, then A MUST mark</linesub>
 <linesub end="57397" start="57287">its record to be announced via multicast.</linesub>
+<notes>
+    <note type="todo">Re-announcement triggered by TTL observation is not implemented.</note>
+</notes>
 </clause>
 <clause id="s6.6_p6_c2" num="2">
 <linesub end="57417" start="57330">Queriers receiving</linesub>

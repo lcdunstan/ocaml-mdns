@@ -163,7 +163,7 @@ def table_of_clauses(clauses):
     thead = etree.SubElement(table, 'thead')
     thead.text = '\n'
     head_tr = etree.SubElement(thead, 'tr')
-    for heading in ['Clause', 'Notes', 'Impl', 'Test']:
+    for heading in ['Clause', 'Notes', 'Impl', 'Test', 'TODO']:
         th = etree.SubElement(head_tr, 'th')
         th.text = heading
 
@@ -190,6 +190,10 @@ def table_of_clauses(clauses):
         test = clause.findall(".//coderef[@type='test']")
         if test:
             td_test.text = 'Yes'
+        td_todo = etree.SubElement(tr, 'td')
+        todo = clause.findall(".//note[@type='todo']")
+        if todo:
+            td_todo.text = 'Yes'
         tr.tail = '\n'
     table.tail = '\n\n'
     return table
