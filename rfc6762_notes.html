@@ -577,11 +577,31 @@
 
 <div class="paragraph" id="s6_p11">
 <div class="clause must" id="s6_p11_c1"><a name="s6_p11_c1" /><span class="label">s6_p11_c1</span>The source UDP port in all Multicast DNS responses MUST be 5353 (the well-known port assigned to mDNS).</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p11_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p11_c1'), 'hover')">
+<div class="note">This is the responsibility of the Transport provided by the caller, as per the example program:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/mirage-mdns/unikernel.ml#l33">https://github.com/infidel/ocaml-dns/blob/master/lib_test/mirage-mdns/unikernel.ml#l33</a></div>
+</div>
+
 <div class="clause must" id="s6_p11_c2"><a name="s6_p11_c2" /><span class="label">s6_p11_c2</span>Multicast DNS implementations MUST silently ignore any Multicast DNS responses they receive where the source UDP port is not 5353.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p11_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6_p11_c2'), 'hover')">
+<div class="note">The resolver is correct:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l92">https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l92</a></div>
+<div class="note">Not implemented properly in the responder probe module:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586</a></div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6_p12">
 <div class="clause must" id="s6_p12_c1"><a name="s6_p12_c1" /><span class="label">s6_p12_c1</span>The destination UDP port in all Multicast DNS responses MUST be 5353, and the destination address MUST be the mDNS IPv4 link-local multicast address 224.0.0.251 or its IPv6 equivalent FF02::FB, except when generating a reply to a query that explicitly requested a unicast response:</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p12_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p12_c1'), 'hover')">
+<div class="note">For announcements:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l429">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l429</a></div>
+<div class="note">For query replies:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l529">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l529</a></div>
+<div class="note">IPv6 not yet implemented.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6_p13">
@@ -590,17 +610,42 @@
 
 <div class="paragraph" id="s6_p14">
 <div class="clause must" id="s6_p14_c1"><a name="s6_p14_c1" /><span class="label">s6_p14_c1</span>Except for these three specific cases, responses MUST NOT be sent via unicast, because then the "Passive Observation of Failures" mechanisms described in Section 10.5 would not work correctly.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p14_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p14_c1'), 'hover')">
+<div class="note">OK, see above.</div>
+</div>
+
 <div class="clause" id="s6_p14_c2"><a name="s6_p14_c2" /><span class="label">s6_p14_c2</span>Other benefits of sending responses via multicast are discussed in Appendix D.</div>
 <div class="clause must" id="s6_p14_c3"><a name="s6_p14_c3" /><span class="label">s6_p14_c3</span>A Multicast DNS querier MUST only accept unicast responses if they answer a recently sent query (e.g., sent within the last two seconds) that explicitly requested unicast responses.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p14_c3'), 'hover')" onmouseover="addClass(document.getElementById('s6_p14_c3'), 'hover')">
+<div class="note">Destination IP address currently ignored:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l90">https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l90</a></div>
+</div>
+
 <div class="clause must" id="s6_p14_c4"><a name="s6_p14_c4" /><span class="label">s6_p14_c4</span>A Multicast DNS querier MUST silently ignore all other unicast responses.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p14_c4'), 'hover')" onmouseover="addClass(document.getElementById('s6_p14_c4'), 'hover')">
+<div class="note">See the previous clause.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6_p15">
 <div class="clause must" id="s6_p15_c1"><a name="s6_p15_c1" /><span class="label">s6_p15_c1</span>To protect the network against excessive packet flooding due to software bugs or malicious attack, a Multicast DNS responder MUST NOT (except in the one special case of answering probe queries) multicast a record on a given interface until at least one second has elapsed since the last time that record was multicast on that particular interface.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p15_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p15_c1'), 'hover')">
+<div class="note">Rate limit not implemented yet.</div>
+</div>
+
 <div class="clause" id="s6_p15_c2"><a name="s6_p15_c2" /><span class="label">s6_p15_c2</span>A legitimate querier on the network should have seen the previous transmission and cached it.</div>
 <div class="clause" id="s6_p15_c3"><a name="s6_p15_c3" /><span class="label">s6_p15_c3</span>A querier that did not receive and cache the previous transmission will retry its request and receive a subsequent response.</div>
 <div class="clause must" id="s6_p15_c4"><a name="s6_p15_c4" /><span class="label">s6_p15_c4</span>In the special case of answering probe queries, because of the limited time before the probing host will make its decision about whether or not to use the name, a Multicast DNS responder MUST respond quickly.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p15_c4'), 'hover')" onmouseover="addClass(document.getElementById('s6_p15_c4'), 'hover')">
+<div class="note">Currently no delay for probe queries.</div>
+</div>
+
 <div class="clause" id="s6_p15_c5"><a name="s6_p15_c5" /><span class="label">s6_p15_c5</span>In this special case only, when responding via multicast to a probe, a Multicast DNS responder is only required to delay its transmission as necessary to ensure an interval of at least 250 ms since the last time the record was multicast on that interface.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6_p15_c5'), 'hover')" onmouseover="addClass(document.getElementById('s6_p15_c5'), 'hover')">
+<div class="note">Rate limit not implemented yet.</div>
+</div>
+
 </div>
 
 <h2 id="s6.1">6.1 Negative Responses</h2>
@@ -620,6 +665,10 @@
 
 <div class="paragraph" id="s6.1_p3">
 <div class="clause must" id="s6.1_p3_c1"><a name="s6.1_p3_c1" /><span class="label">s6.1_p3_c1</span>Any time a responder receives a query for a name for which it has verified exclusive ownership, for a type for which that name has no records, the responder MUST (except as allowed in (a) below) respond asserting the nonexistence of that record using a DNS NSEC record [RFC4034].</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p3_c1'), 'hover')">
+<div class="note">NSEC not implemented.</div>
+</div>
+
 <div class="clause" id="s6.1_p3_c2"><a name="s6.1_p3_c2" /><span class="label">s6.1_p3_c2</span>In the case of Multicast DNS the NSEC record is not being used for its usual DNSSEC [RFC4033] security properties, but simply as a way of expressing which records do or do not exist with a given name.</div>
 </div>
 
@@ -630,7 +679,15 @@
 <div class="paragraph" id="s6.1_p5">
 <div class="clause may" id="s6.1_p5_c1"><a name="s6.1_p5_c1" /><span class="label">s6.1_p5_c1</span>Implementers working with devices with sufficient memory and CPU resources MAY choose to implement code to handle the full generality of the DNS NSEC record [RFC4034], including bitmaps up to 65,536 bits long.</div>
 <div class="clause must" id="s6.1_p5_c2"><a name="s6.1_p5_c2" /><span class="label">s6.1_p5_c2</span>To facilitate use by devices with limited memory and CPU resources, Multicast DNS queriers are only REQUIRED to be able to parse a restricted form of the DNS NSEC record.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p5_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p5_c2'), 'hover')">
+<div class="note">NSEC not implemented.</div>
+</div>
+
 <div class="clause must" id="s6.1_p5_c3"><a name="s6.1_p5_c3" /><span class="label">s6.1_p5_c3</span>All compliant Multicast DNS implementations MUST at least correctly generate and parse the restricted DNS NSEC record format described below:</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p5_c3'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p5_c3'), 'hover')">
+<div class="note">NSEC not implemented.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6.1_p6">
@@ -653,23 +710,43 @@
 <div class="paragraph" id="s6.1_p10">
 <div class="clause" id="s6.1_p10_c1"><a name="s6.1_p10_c1" /><span class="label">s6.1_p10_c1</span>Because this restricted form of the DNS NSEC record is limited to Type Bit Map block number zero, it cannot express the existence of rrtypes above 255.</div>
 <div class="clause must" id="s6.1_p10_c2"><a name="s6.1_p10_c2" /><span class="label">s6.1_p10_c2</span>Consequently, if a Multicast DNS responder were to have records with rrtypes above 255, it MUST NOT generate these restricted-form NSEC records for those names, since to do so would imply that the name has no records with rrtypes above 255, which would be false.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p10_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p10_c2'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 <div class="clause must" id="s6.1_p10_c3"><a name="s6.1_p10_c3" /><span class="label">s6.1_p10_c3</span>In such cases a Multicast DNS responder MUST either (a) emit no NSEC record for that name, or (b) emit a full NSEC record containing the appropriate Type Bit Map block(s) with the correct bits set for all the record types that exist.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p10_c3'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p10_c3'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 <div class="clause" id="s6.1_p10_c4"><a name="s6.1_p10_c4" /><span class="label">s6.1_p10_c4</span>In practice this is not a significant limitation, since rrtypes above 255 are not currently in widespread use.</div>
 </div>
 
 <div class="paragraph" id="s6.1_p11">
 <div class="clause should" id="s6.1_p11_c1"><a name="s6.1_p11_c1" /><span class="label">s6.1_p11_c1</span>If a Multicast DNS implementation receives an NSEC record where the 'Next Domain Name' field is not the record's own name, then the implementation SHOULD ignore the 'Next Domain Name' field and process the remainder of the NSEC record as usual.</div>
 <div class="clause must" id="s6.1_p11_c2"><a name="s6.1_p11_c2" /><span class="label">s6.1_p11_c2</span>In Multicast DNS the 'Next Domain Name' field is not currently used, but it could be used in a future version of this protocol, which is why a Multicast DNS implementation MUST NOT reject or ignore an NSEC record it receives just because it finds an unexpected value in the 'Next Domain Name' field.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p11_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p11_c2'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6.1_p12">
 <div class="clause may" id="s6.1_p12_c1"><a name="s6.1_p12_c1" /><span class="label">s6.1_p12_c1</span>If a Multicast DNS implementation receives an NSEC record containing more than one Type Bit Map, or where the Type Bit Map block number is not zero, or where the block length is not in the range 1-32, then the Multicast DNS implementation MAY silently ignore the entire NSEC record.</div>
 <div class="clause must" id="s6.1_p12_c2"><a name="s6.1_p12_c2" /><span class="label">s6.1_p12_c2</span>A Multicast DNS implementation MUST NOT ignore an entire message just because that message contains one or more NSEC record(s) that the Multicast DNS implementation cannot parse.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p12_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p12_c2'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 <div class="clause" id="s6.1_p12_c3"><a name="s6.1_p12_c3" /><span class="label">s6.1_p12_c3</span>This provision is to allow future enhancements to the protocol to be introduced in a backwards-compatible way that does not break compatibility with older Multicast DNS implementations.</div>
 </div>
 
 <div class="paragraph" id="s6.1_p13">
 <div class="clause must" id="s6.1_p13_c1"><a name="s6.1_p13_c1" /><span class="label">s6.1_p13_c1</span>To help differentiate these synthesized NSEC records (generated programmatically on-the-fly) from conventional Unicast DNS NSEC records (which actually exist in a signed DNS zone), the synthesized Multicast DNS NSEC records MUST NOT have the NSEC bit set in the Type Bit Map, whereas conventional Unicast DNS NSEC records do have the NSEC bit set.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p13_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p13_c1'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6.1_p14">
@@ -680,6 +757,10 @@
 
 <div class="paragraph" id="s6.1_p15">
 <div class="clause must" id="s6.1_p15_c1"><a name="s6.1_p15_c1" /><span class="label">s6.1_p15_c1</span>A responder MUST only generate negative responses to queries for which it has legitimate ownership of the name, rrtype, and rrclass in question, and can legitimately assert that no record with that name, rrtype, and rrclass exists.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.1_p15_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.1_p15_c1'), 'hover')">
+<div class="note">Relevant if NSEC is implemented later.</div>
+</div>
+
 <div class="clause" id="s6.1_p15_c2"><a name="s6.1_p15_c2" /><span class="label">s6.1_p15_c2</span>A responder can assert that a specified rrtype does not exist for one of its names if it knows a priori that it has exclusive ownership of that name (e.g., names of reverse address mapping PTR records, which are derived from IP addresses, which should be unique on the local link) or if it previously claimed unique ownership of that name using probe queries for rrtype "ANY".</div>
 <div class="clause" id="s6.1_p15_c3"><a name="s6.1_p15_c3" /><span class="label">s6.1_p15_c3</span>(If it were to use probe queries for a specific rrtype, then it would only own the name for that rrtype, and could not assert that other rrtypes do not exist.)</div>
 </div>
@@ -692,6 +773,10 @@
 
 <a name="s6.2" /><div class="paragraph" id="s6.2_p1">
 <div class="clause must" id="s6.2_p1_c1"><a name="s6.2_p1_c1" /><span class="label">s6.2_p1_c1</span>When a Multicast DNS responder sends a Multicast DNS response message containing its own address records, it MUST include all addresses that are valid on the interface on which it is sending the message, and MUST NOT include addresses that are not valid on that interface (such as addresses that may be configured on the host's other interfaces).</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.2_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.2_p1_c1'), 'hover')">
+<div class="note">Unique hostname records for multiple IP addresses not implemented yet.</div>
+</div>
+
 <div class="clause" id="s6.2_p1_c2"><a name="s6.2_p1_c2" /><span class="label">s6.2_p1_c2</span>For example, if an interface has both an IPv6 link- local and an IPv6 routable address, both should be included in the response message so that queriers receive both and can make their own choice about which to use.</div>
 <div class="clause" id="s6.2_p1_c3"><a name="s6.2_p1_c3" /><span class="label">s6.2_p1_c3</span>This allows a querier that only has an IPv6 link-local address to connect to the link-local address, and a different querier that has an IPv6 routable address to connect to the IPv6 routable address instead.</div>
 </div>
@@ -708,15 +793,38 @@
 <div class="paragraph" id="s6.2_p4">
 <div class="clause" id="s6.2_p4_c1"><a name="s6.2_p4_c1" /><span class="label">s6.2_p4_c1</span>Some Multicast DNS responders treat a physical interface with both IPv4 and IPv6 address as a single interface with two addresses.</div>
 <div class="clause must" id="s6.2_p4_c2"><a name="s6.2_p4_c2" /><span class="label">s6.2_p4_c2</span>Other Multicast DNS responders may treat this case as logically two interfaces (one with one or more IPv4 addresses, and the other with one or more IPv6 addresses), but responders that operate this way MUST NOT put the corresponding automatic NSEC records in replies they send (i.e., a negative IPv4 assertion in their IPv6 responses, and a negative IPv6 assertion in their IPv4 responses) because this would cause incorrect operation in responders on the network that work the former way.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.2_p4_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.2_p4_c2'), 'hover')">
+<div class="note">Relevant later when IPv6 is implemented.</div>
+</div>
+
 </div>
 
 <h2 id="s6.3">6.3 Responding to Multiquestion Queries</h2>
 
 <a name="s6.3" /><div class="paragraph" id="s6.3_p1">
 <div class="clause must" id="s6.3_p1_c1"><a name="s6.3_p1_c1" /><span class="label">s6.3_p1_c1</span>Multicast DNS responders MUST correctly handle DNS query messages containing more than one question, by answering any or all of the questions to which they have answers.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.3_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.3_p1_c1'), 'hover')">
+<div class="note">OK. Multiple questions are currently answered with one reply message.</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l452">https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l452</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_query.ml#l206">https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_query.ml#l206</a></div>
+</div>
+
 <div class="clause should" id="s6.3_p1_c2"><a name="s6.3_p1_c2" /><span class="label">s6.3_p1_c2</span>Unlike single-question queries, where responding without delay is allowed in appropriate cases, for query messages containing more than one question, all (non-defensive) answers SHOULD be randomly delayed in the range 20-120 ms, or 400-500 ms if the TC (truncated) bit is set.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.3_p1_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.3_p1_c2'), 'hover')">
+<div class="note">OK for non-TC questions:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l503">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l503</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l54">https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l54</a></div>
+<div class="note">TC bit not implemented yet.</div>
+<div class="note">Single vs multiple question is unclear.</div>
+</div>
+
 <div class="clause" id="s6.3_p1_c3"><a name="s6.3_p1_c3" /><span class="label">s6.3_p1_c3</span>This is because when a query message contains more than one question, a Multicast DNS responder cannot generally be certain that other responders will not also be simultaneously generating answers to other questions in that query message.</div>
 <div class="clause" id="s6.3_p1_c4"><a name="s6.3_p1_c4" /><span class="label">s6.3_p1_c4</span>(Answers defending a name, in response to a probe for that name, are not subject to this delay rule and are still sent immediately.)</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.3_p1_c4'), 'hover')" onmouseover="addClass(document.getElementById('s6.3_p1_c4'), 'hover')">
+<div class="note">No delay for unique names:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l507">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l507</a></div>
+</div>
+
 </div>
 
 <h2 id="s6.4">6.4 Response Aggregation</h2>
@@ -730,6 +838,13 @@
 
 <a name="s6.5" /><div class="paragraph" id="s6.5_p1">
 <div class="clause must" id="s6.5_p1_c1"><a name="s6.5_p1_c1" /><span class="label">s6.5_p1_c1</span>When responding to queries using qtype "ANY" (255) and/or qclass "ANY" (255), a Multicast DNS responder MUST respond with *ALL* of its records that match the query.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.5_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.5_p1_c1'), 'hover')">
+<div class="note">qtype "ANY" handled OK:</div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l334">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l334</a></div>
+<div class="note">qclass described previously:</div>
+<div class="ref">See <a href="#s6_p2_c2">s6_p2_c2</a></div>
+</div>
+
 <div class="clause" id="s6.5_p1_c2"><a name="s6.5_p1_c2" /><span class="label">s6.5_p1_c2</span>This is subtly different from how qtype "ANY" and qclass "ANY" work in Unicast DNS.</div>
 </div>
 
@@ -754,6 +869,11 @@
 <div class="paragraph" id="s6.5_p5">
 <div class="clause" id="s6.5_p5_c1"><a name="s6.5_p5_c1" /><span class="label">s6.5_p5_c1</span>Multicast DNS does not share this property that qtype "ANY" and qclass "ANY" queries return some undefined subset of the matching records.</div>
 <div class="clause must" id="s6.5_p5_c2"><a name="s6.5_p5_c2" /><span class="label">s6.5_p5_c2</span>When responding to queries using qtype "ANY" (255) and/or qclass "ANY" (255), a Multicast DNS responder MUST respond with *ALL* of its records that match the query.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.5_p5_c2'), 'hover')" onmouseover="addClass(document.getElementById('s6.5_p5_c2'), 'hover')">
+<div class="note">See above.</div>
+<div class="ref">See <a href="#s6.5_p1_c1">s6.5_p1_c1</a></div>
+</div>
+
 </div>
 
 <h2 id="s6.6">6.6 Cooperating Multicast DNS Responders</h2>
@@ -768,6 +888,12 @@
 
 <div class="paragraph" id="s6.6_p3">
 <div class="clause must" id="s6.6_p3_c1"><a name="s6.6_p3_c1" /><span class="label">s6.6_p3_c1</span>o If A's resource record is intended to be a member of a unique resource record set owned solely by that responder, then this is a conflict and MUST be handled as described in Section 9, "Conflict Resolution".</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.6_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.6_p3_c1'), 'hover')">
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l597">https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l597</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l421">https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l421</a></div>
+<div class="note">Could be useful to have a post-probe conflict test case.</div>
+</div>
+
 </div>
 
 <div class="paragraph" id="s6.6_p4">
@@ -780,6 +906,10 @@
 
 <div class="paragraph" id="s6.6_p6">
 <div class="clause must" id="s6.6_p6_c1"><a name="s6.6_p6_c1" /><span class="label">s6.6_p6_c1</span>o If the TTL of B's resource record given in the message is less than half the true TTL from A's point of view, then A MUST mark its record to be announced via multicast.</div>
+<div class="notes" onmouseout="removeClass(document.getElementById('s6.6_p6_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6.6_p6_c1'), 'hover')">
+<div class="note">Re-announcement triggered by TTL observation is not implemented.</div>
+</div>
+
 <div class="clause" id="s6.6_p6_c2"><a name="s6.6_p6_c2" /><span class="label">s6.6_p6_c2</span>Queriers receiving the record from B would use the TTL given by B and, hence, may delete the record sooner than A expects.</div>
 <div class="clause" id="s6.6_p6_c3"><a name="s6.6_p6_c3" /><span class="label">s6.6_p6_c3</span>By sending its own multicast response correcting the TTL, A ensures that the record will be retained for the desired time.</div>
 </div>
@@ -2489,209 +2619,209 @@
 <a name="index_of_clauses" /><h2>MUST, SHALL</h2>
 
 <table class="index"><thead>
-<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th></tr></thead><tbody>
-<tr><td><a href="#s2_p8_c2">s2_p8_c2</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s2_p8_c3">s2_p8_c3</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s3_p2_c5">s3_p2_c5</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s3_p4_c1">s3_p4_c1</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s4_p2_c1">s4_p2_c1</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s4_p3_c1">s4_p3_c1</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s5_p2_c1">s5_p2_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s5.1_p1_c6">s5.1_p1_c6</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s5.2_p3_c1">s5.2_p3_c1</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s5.2_p6_c4">s5.2_p6_c4</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s5.2_p9_c1">s5.2_p9_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s6_p1_c3">s6_p1_c3</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s6_p2_c2">s6_p2_c2</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s6_p3_c1">s6_p3_c1</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s6_p3_c2">s6_p3_c2</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s6_p3_c3">s6_p3_c3</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s6_p3_c6">s6_p3_c6</a></td><td>Yes</td><td /><td /></tr>
-<tr><td><a href="#s6_p4_c1">s6_p4_c1</a></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
-<tr><td><a href="#s6_p4_c2">s6_p4_c2</a></td><td>Yes</td><td>Yes</td><td /></tr>
-<tr><td><a href="#s6_p11_c1">s6_p11_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p11_c2">s6_p11_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p12_c1">s6_p12_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p14_c1">s6_p14_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p14_c3">s6_p14_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p14_c4">s6_p14_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p15_c1">s6_p15_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p15_c4">s6_p15_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p3_c1">s6.1_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p5_c2">s6.1_p5_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p5_c3">s6.1_p5_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p10_c2">s6.1_p10_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p10_c3">s6.1_p10_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p11_c2">s6.1_p11_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p12_c2">s6.1_p12_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p13_c1">s6.1_p13_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p15_c1">s6.1_p15_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.2_p1_c1">s6.2_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.2_p4_c2">s6.2_p4_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.3_p1_c1">s6.3_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.5_p1_c1">s6.5_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.5_p5_c2">s6.5_p5_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.6_p3_c1">s6.6_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.6_p6_c1">s6.6_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.7_p1_c2">s6.7_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.7_p1_c3">s6.7_p1_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.7_p1_c4">s6.7_p1_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.1_p3_c1">s7.1_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.1_p3_c2">s7.1_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.1_p5_c1">s7.1_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.2_p1_c3">s7.2_p1_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.2_p1_c4">s7.2_p1_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.2_p2_c3">s7.2_p2_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8_p2_c1">s8_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p1_c1">s8.1_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p5_c1">s8.1_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p7_c1">s8.1_p7_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p7_c2">s8.1_p7_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p7_c3">s8.1_p7_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p8_c1">s8.1_p8_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.2_p5_c1">s8.2_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p1_c1">s8.3_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p4_c1">s8.3_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p5_c1">s8.3_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p5_c2">s8.3_p5_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p6_c1">s8.3_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.4_p1_c1">s8.4_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.4_p1_c2">s8.4_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.4_p2_c1">s8.4_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s9_p3_c1">s9_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s9_p3_c2">s9_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s9_p4_c1">s9_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p1_c2">s10.2_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p2_c1">s10.2_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p5_c1">s10.2_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p5_c2">s10.2_p5_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p9_c1">s10.2_p9_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p10_c1">s10.2_p10_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.2_p11_c1">s10.2_p11_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.4_p6_c1">s10.4_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s11_p2_c1">s11_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s14_p4_c1">s14_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s16_p2_c2">s16_p2_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s16_p3_c3">s16_p3_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s16_p3_c4">s16_p3_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s16_p5_c1">s16_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s17_p4_c1">s17_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s17_p5_c1">s17_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p4_c1">s18.1_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p5_c1">s18.1_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.2_p1_c1">s18.2_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.2_p1_c2">s18.2_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.3_p1_c1">s18.3_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.3_p1_c2">s18.3_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.4_p1_c1">s18.4_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.4_p2_c1">s18.4_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.5_p2_c1">s18.5_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.6_p1_c1">s18.6_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.7_p1_c1">s18.7_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.8_p1_c1">s18.8_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.9_p1_c1">s18.9_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.10_p1_c1">s18.10_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.11_p1_c1">s18.11_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.11_p1_c2">s18.11_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p4_c1">s18.14_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p5_c1">s18.14_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p6_c1">s18.14_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p7_c2">s18.14_p7_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p8_c1">s18.14_p8_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s21_p5_c4">s21_p5_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p9_c1">s22.1_p9_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#sAppC_p18_c1">sAppC_p18_c1</a></td><td /><td /><td /></tr>
+<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th><th>TODO</th></tr></thead><tbody>
+<tr><td><a href="#s2_p8_c2">s2_p8_c2</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s2_p8_c3">s2_p8_c3</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s3_p2_c5">s3_p2_c5</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s3_p4_c1">s3_p4_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s4_p2_c1">s4_p2_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s4_p3_c1">s4_p3_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s5_p2_c1">s5_p2_c1</a></td><td>Yes</td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s5.1_p1_c6">s5.1_p1_c6</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p3_c1">s5.2_p3_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s5.2_p6_c4">s5.2_p6_c4</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s5.2_p9_c1">s5.2_p9_c1</a></td><td>Yes</td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s6_p1_c3">s6_p1_c3</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p2_c2">s6_p2_c2</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p3_c1">s6_p3_c1</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p3_c2">s6_p3_c2</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p3_c3">s6_p3_c3</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p3_c6">s6_p3_c6</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6_p4_c1">s6_p4_c1</a></td><td>Yes</td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s6_p4_c2">s6_p4_c2</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p11_c1">s6_p11_c1</a></td><td>Yes</td><td>Yes</td><td /><td /></tr>
+<tr><td><a href="#s6_p11_c2">s6_p11_c2</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p12_c1">s6_p12_c1</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p14_c1">s6_p14_c1</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6_p14_c3">s6_p14_c3</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p14_c4">s6_p14_c4</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p15_c1">s6_p15_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6_p15_c4">s6_p15_c4</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p3_c1">s6.1_p3_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.1_p5_c2">s6.1_p5_c2</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.1_p5_c3">s6.1_p5_c3</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.1_p10_c2">s6.1_p10_c2</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p10_c3">s6.1_p10_c3</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p11_c2">s6.1_p11_c2</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p12_c2">s6.1_p12_c2</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p13_c1">s6.1_p13_c1</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p15_c1">s6.1_p15_c1</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.2_p1_c1">s6.2_p1_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.2_p4_c2">s6.2_p4_c2</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.3_p1_c1">s6.3_p1_c1</a></td><td>Yes</td><td>Yes</td><td>Yes</td><td /></tr>
+<tr><td><a href="#s6.5_p1_c1">s6.5_p1_c1</a></td><td>Yes</td><td>Yes</td><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.5_p5_c2">s6.5_p5_c2</a></td><td>Yes</td><td /><td /><td /></tr>
+<tr><td><a href="#s6.6_p3_c1">s6.6_p3_c1</a></td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td><a href="#s6.6_p6_c1">s6.6_p6_c1</a></td><td>Yes</td><td /><td /><td>Yes</td></tr>
+<tr><td><a href="#s6.7_p1_c2">s6.7_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.7_p1_c3">s6.7_p1_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.7_p1_c4">s6.7_p1_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.1_p3_c1">s7.1_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.1_p3_c2">s7.1_p3_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.1_p5_c1">s7.1_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.2_p1_c3">s7.2_p1_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.2_p1_c4">s7.2_p1_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.2_p2_c3">s7.2_p2_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8_p2_c1">s8_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p1_c1">s8.1_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p5_c1">s8.1_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p7_c1">s8.1_p7_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p7_c2">s8.1_p7_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p7_c3">s8.1_p7_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p8_c1">s8.1_p8_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.2_p5_c1">s8.2_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p1_c1">s8.3_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p4_c1">s8.3_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p5_c1">s8.3_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p5_c2">s8.3_p5_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p6_c1">s8.3_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.4_p1_c1">s8.4_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.4_p1_c2">s8.4_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.4_p2_c1">s8.4_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s9_p3_c1">s9_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s9_p3_c2">s9_p3_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s9_p4_c1">s9_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p1_c2">s10.2_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p2_c1">s10.2_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p5_c1">s10.2_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p5_c2">s10.2_p5_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p9_c1">s10.2_p9_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p10_c1">s10.2_p10_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.2_p11_c1">s10.2_p11_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.4_p6_c1">s10.4_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s11_p2_c1">s11_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s14_p4_c1">s14_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s16_p2_c2">s16_p2_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s16_p3_c3">s16_p3_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s16_p3_c4">s16_p3_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s16_p5_c1">s16_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s17_p4_c1">s17_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s17_p5_c1">s17_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p4_c1">s18.1_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p5_c1">s18.1_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.2_p1_c1">s18.2_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.2_p1_c2">s18.2_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.3_p1_c1">s18.3_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.3_p1_c2">s18.3_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.4_p1_c1">s18.4_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.4_p2_c1">s18.4_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.5_p2_c1">s18.5_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.6_p1_c1">s18.6_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.7_p1_c1">s18.7_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.8_p1_c1">s18.8_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.9_p1_c1">s18.9_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.10_p1_c1">s18.10_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.11_p1_c1">s18.11_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.11_p1_c2">s18.11_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p4_c1">s18.14_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p5_c1">s18.14_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p6_c1">s18.14_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p7_c2">s18.14_p7_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p8_c1">s18.14_p8_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s21_p5_c4">s21_p5_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p9_c1">s22.1_p9_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#sAppC_p18_c1">sAppC_p18_c1</a></td><td /><td /><td /><td /></tr>
 </tbody></table>
 
 <h2>SHOULD, RECOMMENDED</h2>
 
 <table class="index"><thead>
-<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th></tr></thead><tbody>
-<tr><td><a href="#s5.2_p3_c6">s5.2_p3_c6</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p4_c2">s5.2_p4_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p4_c3">s5.2_p4_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p8_c1">s5.2_p8_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p8_c3">s5.2_p8_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p3_c4">s5.4_p3_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p4_c1">s5.4_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p4_c2">s5.4_p4_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p4_c5">s5.4_p4_c5</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p4_c6">s5.4_p4_c6</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p5_c1">s5.4_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.4_p5_c2">s5.4_p5_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.5_p1_c2">s5.5_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.5_p1_c3">s5.5_p1_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p5_c1">s6_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p7_c1">s6_p7_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p9_c1">s6_p9_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6_p10_c1">s6_p10_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p11_c1">s6.1_p11_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p14_c2">s6.1_p14_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.2_p2_c1">s6.2_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.2_p3_c1">s6.2_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.3_p1_c2">s6.3_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.4_p1_c1">s6.4_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.4_p1_c2">s6.4_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.7_p2_c1">s6.7_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.1_p4_c2">s7.1_p4_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.2_p3_c1">s7.2_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.3_p1_c1">s7.3_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s7.4_p1_c1">s7.4_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p1_c3">s8.1_p1_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p6_c4">s8.1_p6_c4</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p6_c7">s8.1_p6_c7</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p9_c1">s8.1_p9_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.1_p9_c3">s8.1_p9_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.4_p2_c2">s8.4_p2_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.4_p3_c1">s8.4_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10_p1_c1">s10_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.1_p1_c1">s10.1_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.1_p2_c1">s10.1_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.4_p6_c2">s10.4_p6_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.5_p3_c1">s10.5_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s10.5_p3_c2">s10.5_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s11_p1_c1">s11_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s11_p6_c1">s11_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s11_p6_c3">s11_p6_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s13_p1_c1">s13_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s14_p1_c1">s14_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s15.1_p1_c2">s15.1_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s17_p3_c1">s17_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s17_p3_c2">s17_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s17_p3_c3">s17_p3_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p1_c1">s18.1_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p1_c2">s18.1_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p3_c1">s18.1_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.5_p1_c2">s18.5_p1_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.5_p3_c1">s18.5_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p1_c1">s18.14_p1_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p2_c2">s18.14_p2_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p2_c3">s18.14_p2_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p3_c1">s18.14_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.14_p6_c2">s18.14_p6_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p3_c1">s22.1_p3_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p3_c2">s22.1_p3_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p5_c1">s22.1_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p6_c1">s22.1_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p6_c2">s22.1_p6_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p7_c1">s22.1_p7_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p8_c1">s22.1_p8_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p8_c3">s22.1_p8_c3</a></td><td /><td /><td /></tr>
+<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th><th>TODO</th></tr></thead><tbody>
+<tr><td><a href="#s5.2_p3_c6">s5.2_p3_c6</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p4_c2">s5.2_p4_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p4_c3">s5.2_p4_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p8_c1">s5.2_p8_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p8_c3">s5.2_p8_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p3_c4">s5.4_p3_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p4_c1">s5.4_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p4_c2">s5.4_p4_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p4_c5">s5.4_p4_c5</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p4_c6">s5.4_p4_c6</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p5_c1">s5.4_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.4_p5_c2">s5.4_p5_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.5_p1_c2">s5.5_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.5_p1_c3">s5.5_p1_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6_p5_c1">s6_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6_p7_c1">s6_p7_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6_p9_c1">s6_p9_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6_p10_c1">s6_p10_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p11_c1">s6.1_p11_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p14_c2">s6.1_p14_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.2_p2_c1">s6.2_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.2_p3_c1">s6.2_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.3_p1_c2">s6.3_p1_c2</a></td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td><a href="#s6.4_p1_c1">s6.4_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.4_p1_c2">s6.4_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.7_p2_c1">s6.7_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.1_p4_c2">s7.1_p4_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.2_p3_c1">s7.2_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.3_p1_c1">s7.3_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s7.4_p1_c1">s7.4_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p1_c3">s8.1_p1_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p6_c4">s8.1_p6_c4</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p6_c7">s8.1_p6_c7</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p9_c1">s8.1_p9_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.1_p9_c3">s8.1_p9_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.4_p2_c2">s8.4_p2_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.4_p3_c1">s8.4_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10_p1_c1">s10_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.1_p1_c1">s10.1_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.1_p2_c1">s10.1_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.4_p6_c2">s10.4_p6_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.5_p3_c1">s10.5_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s10.5_p3_c2">s10.5_p3_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s11_p1_c1">s11_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s11_p6_c1">s11_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s11_p6_c3">s11_p6_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s13_p1_c1">s13_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s14_p1_c1">s14_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s15.1_p1_c2">s15.1_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s17_p3_c1">s17_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s17_p3_c2">s17_p3_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s17_p3_c3">s17_p3_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p1_c1">s18.1_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p1_c2">s18.1_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p3_c1">s18.1_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.5_p1_c2">s18.5_p1_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.5_p3_c1">s18.5_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p1_c1">s18.14_p1_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p2_c2">s18.14_p2_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p2_c3">s18.14_p2_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p3_c1">s18.14_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.14_p6_c2">s18.14_p6_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p3_c1">s22.1_p3_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p3_c2">s22.1_p3_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p5_c1">s22.1_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p6_c1">s22.1_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p6_c2">s22.1_p6_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p7_c1">s22.1_p7_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p8_c1">s22.1_p8_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p8_c3">s22.1_p8_c3</a></td><td /><td /><td /><td /></tr>
 </tbody></table>
 
 <h2>MAY, OPTIONAL</h2>
 
 <table class="index"><thead>
-<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th></tr></thead><tbody>
-<tr><td><a href="#s3_p4_c3">s3_p4_c3</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s3_p6_c1">s3_p6_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s5.2_p3_c5">s5.2_p3_c5</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p4_c1">s6.1_p4_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p5_c1">s6.1_p5_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s6.1_p12_c1">s6.1_p12_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s8.3_p4_c2">s8.3_p4_c2</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s18.1_p2_c1">s18.1_p2_c1</a></td><td /><td /><td /></tr>
-<tr><td><a href="#s22.1_p7_c2">s22.1_p7_c2</a></td><td /><td /><td /></tr>
+<tr><th>Clause</th><th>Notes</th><th>Impl</th><th>Test</th><th>TODO</th></tr></thead><tbody>
+<tr><td><a href="#s3_p4_c3">s3_p4_c3</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s3_p6_c1">s3_p6_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s5.2_p3_c5">s5.2_p3_c5</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p4_c1">s6.1_p4_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p5_c1">s6.1_p5_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s6.1_p12_c1">s6.1_p12_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s8.3_p4_c2">s8.3_p4_c2</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s18.1_p2_c1">s18.1_p2_c1</a></td><td /><td /><td /><td /></tr>
+<tr><td><a href="#s22.1_p7_c2">s22.1_p7_c2</a></td><td /><td /><td /><td /></tr>
 </tbody></table>
 
 </body>
