@@ -45,10 +45,12 @@ def coderef_as_element(coderef):
     if base:
         elem.text = coderef_type + ': '
         url = base + path
+        a_text = path
         if line:
-            url += '#l{0}'.format(line)
+            url += '#l' + line
+            a_text += ':' + line
         a = etree.Element('a', href=url)
-        a.text = url
+        a.text = a_text
         elem.append(a)
     else:
         elem.text = coderef_type + ': ' + repo
