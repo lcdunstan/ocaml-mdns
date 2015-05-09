@@ -33,10 +33,11 @@ div.clause {
 div.notes {
     float: right;
     background-color: #ffeeff;
-    width: 500px;
+    width: 50%;
     margin: 5px;
     border: solid 1px black;
     padding: 3px 5px;
+    font-size: 80%;
 }
 
 .hover {
