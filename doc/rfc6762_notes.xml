@@ -617,7 +617,8 @@
 <linesub end="19726" start="19587">using UDP source port 5353 signals the presence of a fully compliant</linesub>
 <linesub end="19746" start="19659">Multicast DNS querier, as described below.</linesub>
 <notes>
-    <note>A legacy mDNS resolver is not needed now that we have a real resolver.</note>
+    <note>Not needed for our resolver. Responder does support these legacy queries:</note>
+    <ref target="s5.1_p1_c1"/>
 </notes>
 </clause>
 </paragraph>
@@ -2126,11 +2127,11 @@
 <linesub end="61054" start="60919">RR TTL as known by the Multicast DNS responder, the responder MUST</linesub>
 <linesub end="61128" start="60989">send an answer so as to update the querier's cache before the record</linesub>
 <linesub end="61128" start="61061">becomes in danger of expiration.</linesub>
-</clause>
 <notes>
     <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="filter" line="450" />
     <note type="todo">Known answer with TTL less than half is untested.</note>
 </notes>
+</clause>
 </paragraph>
 
 <paragraph id="s7.1_p4" importance="should" num="4">
@@ -2841,6 +2842,10 @@
 <linesub end="81035" start="80906">an unsolicited Multicast DNS response containing, in the Answer</linesub>
 <linesub end="81108" start="80973">Section, all of its newly registered resource records (both shared</linesub>
 <linesub end="81178" start="81043">records, and unique records that have completed the probing step).</linesub>
+<notes>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="announce" line="386" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="announce" line="563" />
+</notes>
 </clause>
 <clause id="s8.3_p1_c2" num="2">
 <linesub end="81246" start="81113">If there are too many resource records to fit in a single packet,</linesub>
@@ -2914,6 +2919,10 @@
 <linesub end="82688" start="82551">response (solicited or otherwise) containing a conflicting resource</linesub>
 <linesub end="82753" start="82622">record, the conflict MUST be resolved as described in Section 9,</linesub>
 <linesub end="82737" start="82690">"Conflict Resolution".</linesub>
+<notes>
+    <note>See below:</note>
+    <ref target="s9_p3_c1"/>
+</notes>
 </clause>
 </paragraph>
 
@@ -3277,12 +3286,19 @@
 <linesub end="91920" start="91787">might potentially be new data (e.g., after rebooting, waking from</linesub>
 <linesub end="91997" start="91856">sleep, connecting to a new network link, or changing IP address), the</linesub>
 <linesub end="92045" start="91929">host needs to inform peers of that new data.</linesub>
+<notes>
+    <note type="todo">Dynamic changes to mDNS records are not yet supported by the responder.</note>
+</notes>
 </clause>
 <clause id="s10.2_p1_c2" importance="must" num="2">
 <linesub end="92070" start="91975">In cases where the host</linesub>
 <linesub end="92141" start="92002">has not been continuously connected and participating on the network</linesub>
 <linesub end="92203" start="92074">link, it MUST first probe to re-verify uniqueness of its unique</linesub>
 <linesub end="92252" start="92141">records, as described above in Section 8.1, "Probing".</linesub>
+<notes>
+    <note>See above about probe on link changes:</note>
+    <ref target="s8_p2_c1"/>
+</notes>
 </clause>
 </paragraph>
 
@@ -3291,6 +3307,10 @@
 <linesub end="92337" start="92200">Having completed the Probing step, if necessary, the host MUST then</linesub>
 <linesub end="92412" start="92271">send a series of unsolicited announcements to update cache entries in</linesub>
 <linesub end="92429" start="92344">its neighbor hosts.</linesub>
+<notes>
+    <note>See above about announcements:</note>
+    <ref target="s8.3_p1_c1"/>
+</notes>
 </clause>
 <clause id="s10.2_p2_c2" num="2">
 <linesub end="92473" start="92365">In these unsolicited announcements, if the</linesub>
@@ -3357,10 +3377,17 @@
 <linesub end="94541" start="94404">unique RRSet, it MUST send the entire RRSet, preferably in a single</linesub>
 <linesub end="94614" start="94475">packet, or if the entire RRSet will not fit in a single packet, in a</linesub>
 <linesub end="94676" start="94547">quick burst of packets sent as close together as possible.</linesub>
+<notes>
+    <note>OK, all answers are included in responses:</note>
+    <ref target="s8.3_p1_c1"/>
+</notes>
 </clause>
 <clause id="s10.2_p5_c2" importance="must" num="2">
 <linesub end="94686" start="94607">The host</linesub>
 <linesub end="94750" start="94619">MUST set the cache-flush bit on all members of the unique RRSet.</linesub>
+<notes>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_answer" line="465" />
+</notes>
 </clause>
 </paragraph>
 
@@ -3409,6 +3436,10 @@
 <linesub end="95847" start="95716">The cache-flush bit MUST NOT be set in any resource records in a</linesub>
 <linesub end="95923" start="95784">response message sent in legacy unicast responses to UDP ports other</linesub>
 <linesub end="95879" start="95856">than 5353.</linesub>
+<notes>
+    <note>Same requirement as above:</note>
+    <ref target="s6.7_p1_c4"/>
+</notes>
 </clause>
 </paragraph>
 
@@ -3416,6 +3447,9 @@
 <clause id="s10.2_p10_c1" importance="must" num="1">
 <linesub end="96006" start="95871">The cache-flush bit MUST NOT be set in any resource records in the</linesub>
 <linesub end="96022" start="95941">Known-Answer list of any query message.</linesub>
+<notes>
+    <note type="todo">This requirement will be relevant later if caching is implemented in the resolver.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -3423,6 +3457,11 @@
 <clause id="s10.2_p11_c1" importance="must" num="1">
 <linesub end="96114" start="95985">The cache-flush bit MUST NOT ever be set in any shared resource</linesub>
 <linesub end="96129" start="96052">record.</linesub>
+<notes>
+    <note>OK.</note>
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="announce" line="427" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_answer" line="465" />
+</notes>
 </clause>
 <clause id="s10.2_p11_c2" num="2">
 <linesub end="96189" start="96061">To do so would cause all the other shared versions of this</linesub>
@@ -3576,6 +3615,9 @@
 <linesub end="100488" start="100359">When the cache receives this hint that it should reconfirm some</linesub>
 <linesub end="100565" start="100426">record, it MUST issue two or more queries for the resource record in</linesub>
 <linesub end="100576" start="100498">dispute.</linesub>
+<notes>
+    <note type="todo">This requirement will be relevant later if caching is implemented in the resolver.</note>
+</notes>
 </clause>
 <clause id="s10.4_p6_c2" importance="should" num="2">
 <linesub end="100635" start="100508">If no response is received within ten seconds, then, even</linesub>
@@ -3699,6 +3741,10 @@
 <linesub end="104019" start="103880">address (including the 224.0.0.251 and FF02::FB link-local multicast</linesub>
 <linesub end="104087" start="103952">addresses) MUST only accept responses to that query that originate</linesub>
 <linesub end="104163" start="104022">from the local link, and silently discard any other response packets.</linesub>
+<notes>
+    <note type="todo">Not yet implemented.</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="callback" line="91" />
+</notes>
 </clause>
 <clause id="s11_p2_c2" num="2">
 <linesub end="104230" start="104095">Without this check, it could be possible for remote rogue hosts to</linesub>
@@ -4026,6 +4072,9 @@
 <linesub end="114266" start="114127">addresses in IPv4 or IPv6 address records in Multicast DNS responses</linesub>
 <linesub end="114340" start="114199">MUST be valid for use on the interface on which the response is being</linesub>
 <linesub end="114285" start="114272">sent.</linesub>
+<notes>
+    <note>I think this requirement should be the responsibility of the user of the mDNS library.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -4298,6 +4347,9 @@
 <linesub end="122954" start="122813">it adopts the simple obvious elegant solution: all names in Multicast</linesub>
 <linesub end="123017" start="122886">DNS MUST be encoded as precomposed UTF-8 [RFC3629] "Net-Unicode"</linesub>
 <linesub end="122987" start="122954">[RFC5198] text.</linesub>
+<notes>
+    <note>I think this requirement should be the responsibility of the user of the mDNS library.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -4316,6 +4368,9 @@
 <clause id="s16_p3_c3" importance="must" num="3">
 <linesub end="123450" start="123345">Multicast DNS names MUST NOT contain a</linesub>
 <linesub end="123477" start="123387">"Byte Order Mark".</linesub>
+<notes>
+    <note>I think this requirement should be the responsibility of the user of the mDNS library.</note>
+</notes>
 </clause>
 <clause id="s16_p3_c4" importance="must" num="4">
 <linesub end="123528" start="123407">Any occurrence of the Unicode character U+FEFF at</linesub>
@@ -4324,6 +4379,9 @@
 <linesub end="123718" start="123583">representing (just as for any other legal unicode value) an actual</linesub>
 <linesub end="123788" start="123653">literal instance of that character (in this case a zero-width non-</linesub>
 <linesub end="123778" start="123723">breaking space character).</linesub>
+<notes>
+    <note>I think this requirement should be the responsibility of the user of the mDNS library.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -4343,6 +4401,9 @@
 <linesub end="124324" start="124185">Multicast DNS implementations MUST NOT use any other encodings apart</linesub>
 <linesub end="124398" start="124257">from precomposed UTF-8 (US-ASCII being considered a compatible subset</linesub>
 <linesub end="124406" start="124330">of UTF-8).</linesub>
+<notes>
+    <note>I think this requirement should be the responsibility of the user of the mDNS library.</note>
+</notes>
 </clause>
 <clause id="s16_p5_c2" num="2">
 <linesub end="124459" start="124342">The reasons for selecting UTF-8 instead of Punycode</linesub>
@@ -4448,6 +4509,9 @@
 <clause id="s17_p4_c1" importance="must" num="1">
 <linesub end="127534" start="127397">A Multicast DNS packet larger than the interface MTU, which is sent</linesub>
 <linesub end="127599" start="127468">using fragments, MUST NOT contain more than one resource record.</linesub>
+<notes>
+    <note type="todo">MTU is currently ignored.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -4455,6 +4519,9 @@
 <clause id="s17_p5_c1" importance="must" num="1">
 <linesub end="127678" start="127537">Even when fragmentation is used, a Multicast DNS packet, including IP</linesub>
 <linesub end="127701" start="127610">and UDP headers, MUST NOT exceed 9000 bytes.</linesub>
+<notes>
+    <note type="todo">Maximum packet sizes are not implemented.</note>
+</notes>
 </clause>
 </paragraph>
 
@@ -4535,6 +4602,14 @@
 <linesub end="129871" start="129736">In multicast responses, including unsolicited multicast responses,</linesub>
 <linesub end="129947" start="129806">the Query Identifier MUST be set to zero on transmission, and MUST be</linesub>
 <linesub end="129924" start="129879">ignored on reception.</linesub>
+<notes>
+    <note>OK for responses sent:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="52" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_query.ml" name="answer-mdns-A" line="135" />
+    <note>OK for responses received:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="440" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4543,6 +4618,12 @@
 <linesub end="130030" start="129905">In legacy unicast response messages generated specifically in</linesub>
 <linesub end="130101" start="129970">response to a particular (unicast or multicast) query, the Query</linesub>
 <linesub end="130145" start="130038">Identifier MUST match the ID from the query message.</linesub>
+<notes>
+    <note>OK:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="52" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_query" line="534" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-legacy" line="113" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4552,9 +4633,19 @@
 <paragraph id="s18.2_p1" importance="must" num="1">
 <clause id="s18.2_p1_c1" importance="must" num="1">
 <linesub end="130214" start="130127">In query messages the QR bit MUST be zero.</linesub>
+<notes>
+    <note>OK:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="120" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+</notes>
 </clause>
 <clause id="s18.2_p1_c2" importance="must" num="2">
 <linesub end="130264" start="130173">In response messages the QR bit MUST be one.</linesub>
+<notes>
+    <note>OK:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="48" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4566,10 +4657,25 @@
 <linesub end="130374" start="130237">In both multicast query and multicast response messages, the OPCODE</linesub>
 <linesub end="130441" start="130308">MUST be zero on transmission (only standard queries are currently</linesub>
 <linesub end="130473" start="130377">supported over multicast).</linesub>
+<notes>
+    <note>OK for queries:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="120" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <note>OK for responses:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="48" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+</notes>
 </clause>
 <clause id="s18.3_p1_c2" importance="must" num="2">
 <linesub end="130514" start="130405">Multicast DNS messages received with an</linesub>
 <linesub end="130547" start="130448">OPCODE other than zero MUST be silently ignored.</linesub>
+<notes>
+    <note>OK for responses received by the resolver:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="57" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="418" />
+    <note type="todo">OK for responses received by the responder (but no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process" line="623" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4580,6 +4686,13 @@
 <clause id="s18.4_p1_c1" importance="must" num="1">
 <linesub end="130668" start="130539">In query messages, the Authoritative Answer bit MUST be zero on</linesub>
 <linesub end="130703" start="130606">transmission, and MUST be ignored on reception.</linesub>
+<notes>
+    <note>OK for queries sent:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <note type="todo">OK for queries received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4589,6 +4702,15 @@
 <linesub end="130871" start="130730">bit MUST be set to one (not setting this bit would imply there's some</linesub>
 <linesub end="130934" start="130803">other place where "better" information may be found) and MUST be</linesub>
 <linesub end="130916" start="130871">ignored on reception.</linesub>
+<notes>
+    <note>OK for responses sent (the library user is responsible for not creating delegation records):</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="48" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+    <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="57" />
+    <note type="todo">OK for responses received by the responder (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4615,6 +4737,15 @@
 <clause id="s18.5_p2_c1" importance="must" num="1">
 <linesub end="131388" start="131269">In multicast response messages, the TC bit MUST be zero on</linesub>
 <linesub end="131428" start="131331">transmission, and MUST be ignored on reception.</linesub>
+<notes>
+    <note>OK for responses sent:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+    <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
+    <note type="todo">OK for responses received by the responder (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4635,6 +4766,20 @@
 <linesub end="131969" start="131846">In both multicast query and multicast response messages, the</linesub>
 <linesub end="132043" start="131910">Recursion Desired bit SHOULD be zero on transmission, and MUST be</linesub>
 <linesub end="132024" start="131979">ignored on reception.</linesub>
+<notes>
+    <note>OK for queries sent:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <note type="todo">OK for queries received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+    <note type="todo">Not guaranteed for responses sent:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+    <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
+    <note type="todo">OK for responses received by the responder (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4646,6 +4791,20 @@
 <linesub end="132165" start="132042">In both multicast query and multicast response messages, the</linesub>
 <linesub end="132239" start="132106">Recursion Available bit MUST be zero on transmission, and MUST be</linesub>
 <linesub end="132220" start="132175">ignored on reception.</linesub>
+<notes>
+    <note>OK for queries sent:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <note type="todo">OK for queries received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+    <note>OK for responses sent:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+    <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
+    <note type="todo">OK for responses received by the responder (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4656,6 +4815,13 @@
 <clause id="s18.8_p1_c1" importance="must" num="1">
 <linesub end="132355" start="132222">In both query and response messages, the Zero bit MUST be zero on</linesub>
 <linesub end="132388" start="132291">transmission, and MUST be ignored on reception.</linesub>
+<notes>
+    <note>OK for all packets sent:</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="marshal_detail" line="1369" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_packet.ml" name="marshal-dns-q-A" line="101" />
+    <note type="todo">OK for all packets received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="parse_detail" line="1388" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4667,6 +4833,13 @@
 <linesub end="132498" start="132375">In both multicast query and multicast response messages, the</linesub>
 <linesub end="132576" start="132439">Authentic Data bit [RFC2535] MUST be zero on transmission, and MUST</linesub>
 <linesub end="132561" start="132510">be ignored on reception.</linesub>
+<notes>
+    <note>OK for all packets sent:</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="marshal_detail" line="1369" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_packet.ml" name="marshal-dns-q-A" line="101" />
+    <note type="todo">OK for all packets received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="parse_detail" line="1388" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4678,6 +4851,13 @@
 <linesub end="132716" start="132575">In both multicast query and multicast response messages, the Checking</linesub>
 <linesub end="132779" start="132648">Disabled bit [RFC2535] MUST be zero on transmission, and MUST be</linesub>
 <linesub end="132761" start="132716">ignored on reception.</linesub>
+<notes>
+    <note>OK for all packets sent:</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="marshal_detail" line="1369" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_packet.ml" name="marshal-dns-q-A" line="101" />
+    <note type="todo">OK for all packets received (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="parse_detail" line="1388" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4688,10 +4868,25 @@
 <clause id="s18.11_p1_c1" importance="must" num="1">
 <linesub end="132914" start="132773">In both multicast query and multicast response messages, the Response</linesub>
 <linesub end="132950" start="132846">Code MUST be zero on transmission.</linesub>
+<notes>
+    <note>OK for queries sent:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <note>OK for responses sent:</note>
+    <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
+</notes>
 </clause>
 <clause id="s18.11_p1_c2" importance="must" num="2">
 <linesub end="132983" start="132882">Multicast DNS messages received</linesub>
 <linesub end="133028" start="132917">with non-zero Response Codes MUST be silently ignored.</linesub>
+<notes>
+    <note type="todo">OK for messages received by the responder (no unit test yet):</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process" line="626" />
+    <note>OK for responses received by the resolver:</note>
+    <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="58" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="420" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4761,15 +4956,19 @@
 <linesub end="134762" start="134629">In addition to compressing the *names* of resource records, names</linesub>
 <linesub end="134835" start="134698">that appear within the *rdata* of the following rrtypes SHOULD also</linesub>
 <linesub end="134860" start="134769">be compressed in all Multicast DNS messages:</linesub>
+<linesub end="134953" start="134820">NS, CNAME, PTR, DNAME, SOA, MX, AFSDB, RT, KX, RP, PX, SRV, NSEC</linesub>
 </clause>
 </paragraph>
 
 <paragraph id="s18.14_p4" importance="must" num="4">
 <clause id="s18.14_p4_c1" importance="must" num="1">
-<linesub end="134953" start="134820">NS, CNAME, PTR, DNAME, SOA, MX, AFSDB, RT, KX, RP, PX, SRV, NSEC</linesub>
 <linesub end="135030" start="134889">Until future IETF Standards Action [RFC5226] specifying that names in</linesub>
 <linesub end="135093" start="134962">the rdata of other types should be compressed, names that appear</linesub>
 <linesub end="135171" start="135030">within the rdata of any type not listed above MUST NOT be compressed.</linesub>
+<notes>
+    <note type="todo">Apparently we also compress RRSIG, SIG, MB, MD, MF, MG, MINFO, and MR:</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="marshal_rdata" line="1053" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4778,6 +4977,11 @@
 <linesub end="135233" start="135104">Implementations receiving Multicast DNS messages MUST correctly</linesub>
 <linesub end="135298" start="135171">decode compressed names appearing in the Question Section, and</linesub>
 <linesub end="135370" start="135237">compressed names of resource records appearing in other sections.</linesub>
+<notes>
+    <note>OK (but test coverage analysis should be consulted):</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="parse_rr" line="1243" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_packet.ml" name="parse-mdns-r-SD2" line="341" />
+</notes>
 </clause>
 </paragraph>
 
@@ -4785,6 +4989,11 @@
 <clause id="s18.14_p6_c1" importance="must" num="1">
 <linesub end="135444" start="135307">In addition, implementations MUST correctly decode compressed names</linesub>
 <linesub end="135502" start="135378">appearing within the *rdata* of the rrtypes listed above.</linesub>
+<notes>
+    <note>OK (but test coverage analysis should be consulted):</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="parse_rdata" line="882" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_packet.ml" name="parse-mdns-r-SD2" line="341" />
+</notes>
 </clause>
 <clause id="s18.14_p6_c2" importance="should" num="2">
 <linesub end="135509" start="135437">Where</linesub>
@@ -4815,6 +5024,10 @@
 <linesub end="136635" start="136525">Since all Multicast DNS implementations were</linesub>
 <linesub end="136714" start="136573">created after 1996, all Multicast DNS implementations are REQUIRED to</linesub>
 <linesub end="136729" start="136646">decode compressed SRV records correctly.</linesub>
+<notes>
+    <note>OK, see above:</note>
+    <ref target="s18.14_p5"/>
+</notes>
 </clause>
 </paragraph>
 
@@ -4822,6 +5035,10 @@
 <clause id="s18.14_p8_c1" importance="must" num="1">
 <linesub end="136830" start="136691">In legacy unicast responses generated to answer legacy queries, name</linesub>
 <linesub end="136864" start="136763">compression MUST NOT be performed on SRV records.</linesub>
+<notes>
+    <note type="todo">We do not comply with this:</note>
+    <coderef type="impl" repo="dns" path="lib/packet.ml" name="marshal_rdata" line="1179" />
+</notes>
 </clause>
 </paragraph>
 
@@ -5006,6 +5223,10 @@
 <linesub end="142896" start="142761">avoid this, a host MUST NOT append the search suffix ".local.", if</linesub>
 <linesub end="142968" start="142831">present, to any relative (partially qualified) host name containing</linesub>
 <linesub end="142989" start="142902">two or more labels.</linesub>
+<notes>
+    <note>This requirement would be relevant only if we implement a high-level resolver, as mentioned above:</note>
+    <ref target="s3_p4_c1"/>
+</notes>
 </clause>
 <clause id="s21_p5_c5" num="5">
 <linesub end="143035" start="142923">Appending ".local." to single-label relative</linesub>
@@ -5285,6 +5506,9 @@
 <clause id="s22.1_p9_c1" importance="must" num="1">
 <linesub end="150323" start="150203">7. DNS Registrars MUST NOT allow any of these names to be</linesub>
 <linesub end="150392" start="150270">registered in the normal way to any person or entity.</linesub>
+<notes>
+    <note>This requirement is not applicable to our library.</note>
+</notes>
 </clause>
 <clause id="s22.1_p9_c2" num="2">
 <linesub end="150399" start="150325">These</linesub>
@@ -6107,6 +6331,9 @@
 <clause id="sAppC_p18_c1" importance="must" num="1">
 <linesub end="169342" start="169203">Compliant Multicast DNS implementations MUST support names up to 255</linesub>
 <linesub end="169384" start="169275">bytes plus a terminating zero, i.e., 256 bytes total.</linesub>
+<notes>
+    <note type="todo">Probably supported, but not tested.</note>
+</notes>
 </clause>
 </paragraph>
 
