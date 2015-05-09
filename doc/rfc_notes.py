@@ -123,13 +123,16 @@ def paragraph_as_element(paragraph, section):
     else:
         for child in paragraph:
             if child.tag == 'clause':
-                elem.append(clause_as_element(child))
-                for notes in child.findall('notes'):
-                    elem.append(notes_as_element(notes, child.get('id')))
+                clause = clause_as_element(child)
+                elem.append(clause)
+                # For editing the XML it is nicer to have <notes> after
+                # the text, but for the HTML it looks better before the text.
+                for i, notes in enumerate(child.findall('notes')):
+                    clause.insert(0, notes_as_element(notes, child.get('id')))
             elif child.tag == 'line':
                 elem.append(line_as_element(child))
             elif child.tag == 'notes':
-                elem.append(notes_as_element(child, id))
+                elem.insert(0, notes_as_element(child, id))
     elem.tail = '\n\n'
     return elem
 
@@ -153,7 +156,7 @@ def section_as_elements(section):
         if child.tag == 'paragraph':
             elements.append(paragraph_as_element(child, section))
         elif child.tag == 'notes':
-            elements.append(notes_as_element(child, id))
+            elements.insert(0, notes_as_element(child, id))
     return elements
 
 
