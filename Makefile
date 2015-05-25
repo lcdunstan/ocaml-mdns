@@ -1,6 +1,9 @@
+TOOL_REPO=../reqtrace
+TOOL_DIR=$(TOOL_REPO)/python
+RFC_NOTES=$(TOOL_DIR)/rfc_notes.py
+
 MAIN_REPO=../ocaml-mdns
 DOC_DIR=$(MAIN_REPO)/doc
-RFC_NOTES=$(DOC_DIR)/rfc_notes.py
 
 all: rfc6762_notes.html rfc_notes.js rfc_notes.css
 .PHONY: all
@@ -9,11 +12,11 @@ all: rfc6762_notes.html rfc_notes.js rfc_notes.css
 	$(RFC_NOTES) $< --html $@
 	git add $@
 
-%.js: $(DOC_DIR)/%.js
+%.js: $(TOOL_DIR)/%.js
 	cp $< $@
 	git add $@
 
-%.css: $(DOC_DIR)/%.css
+%.css: $(TOOL_DIR)/%.css
 	cp $< $@
 	git add $@
 
