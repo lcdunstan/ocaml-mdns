@@ -9,7 +9,7 @@ all: rfc6762_notes.html rfc_notes.js rfc_notes.css
 .PHONY: all
 
 %.html: $(DOC_DIR)/%.xml $(RFC_NOTES)
-	$(RFC_NOTES) $< --html $@
+	$(RFC_NOTES) $< --base=https://github.com/infidel/ocaml-dns/blob/master/ --html $@
 	git add $@
 
 %.js: $(TOOL_DIR)/%.js
