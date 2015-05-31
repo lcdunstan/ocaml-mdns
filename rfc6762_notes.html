@@ -500,7 +500,7 @@
 <div class="paragraph" id="s6_p3">
 <div class="clause must" id="s6_p3_c1"><a name="s6_p3_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s6_p3_c1'), 'hover')" onmouseover="addClass(document.getElementById('s6_p3_c1'), 'hover')">
 <div class="note">No answer is added to the response when NXDomain. No response is sent when no answers are available:</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l517">lib/query.ml:517</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l517">lwt/mdns_responder.ml:517</a></div>
 <div class="note">Tested only indirectly by unit tests.</div>
 </div>
 
@@ -1971,7 +1971,7 @@
 <div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_query.ml#l135">lib_test/ounit/test_query.ml:135</a></div>
 <div class="note">OK for responses received:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l39">mirage/mdns_resolver_mirage.ml:39</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l440">lib_test/ounit/test_mdns_resolver.ml:440</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l440">lib_test/ounit/test_mdns_resolver_mirage.ml:440</a></div>
 </div>
 
 <span class="label">s18.1_p4_c1</span>In multicast responses, including unsolicited multicast responses, the Query Identifier MUST be set to zero on transmission, and MUST be ignored on reception.</div>
@@ -1994,7 +1994,7 @@
 <div class="clause must" id="s18.2_p1_c1"><a name="s18.2_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.2_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.2_p1_c1'), 'hover')">
 <div class="note">OK:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l120">mirage/mdns_resolver_mirage.ml:120</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 </div>
 
 <span class="label">s18.2_p1_c1</span>In query messages the QR bit MUST be zero.</div>
@@ -2013,7 +2013,7 @@
 <div class="clause must" id="s18.3_p1_c1"><a name="s18.3_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.3_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.3_p1_c1'), 'hover')">
 <div class="note">OK for queries:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l120">mirage/mdns_resolver_mirage.ml:120</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 <div class="note">OK for responses:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l48">lib/query.ml:48</a></div>
 <div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l73">lib_test/ounit/test_mdns_responder.ml:73</a></div>
@@ -2023,9 +2023,9 @@
 <div class="clause must" id="s18.3_p1_c2"><a name="s18.3_p1_c2" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.3_p1_c2'), 'hover')" onmouseover="addClass(document.getElementById('s18.3_p1_c2'), 'hover')">
 <div class="note">OK for responses received by the resolver:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l57">mirage/mdns_resolver_mirage.ml:57</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l418">lib_test/ounit/test_mdns_resolver.ml:418</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l418">lib_test/ounit/test_mdns_resolver_mirage.ml:418</a></div>
 <div class="note">OK for responses received by the responder (but no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l623">mirage/mdns_responder.ml:623</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l623">lwt/mdns_responder.ml:623</a></div>
 </div>
 
 <span class="label">s18.3_p1_c2</span>Multicast DNS messages received with an OPCODE other than zero MUST be silently ignored.</div>
@@ -2037,9 +2037,9 @@
 <div class="clause must" id="s18.4_p1_c1"><a name="s18.4_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.4_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.4_p1_c1'), 'hover')">
 <div class="note">OK for queries sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l121">mirage/mdns_resolver_mirage.ml:121</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 <div class="note">OK for queries received (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l465">mirage/mdns_responder.ml:465</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l465">lwt/mdns_responder.ml:465</a></div>
 </div>
 
 <span class="label">s18.4_p1_c1</span>In query messages, the Authoritative Answer bit MUST be zero on transmission, and MUST be ignored on reception.</div>
@@ -2053,7 +2053,7 @@
 <div class="note">OK for responses received by the resolver (no unit test yet):</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l57">mirage/mdns_resolver_mirage.ml:57</a></div>
 <div class="note">OK for responses received by the responder (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l586">mirage/mdns_responder.ml:586</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586">lwt/mdns_responder.ml:586</a></div>
 </div>
 
 <span class="label">s18.4_p2_c1</span>In response messages for Multicast domains, the Authoritative Answer bit MUST be set to one (not setting this bit would imply there's some other place where "better" information may be found) and MUST be ignored on reception.</div>
@@ -2075,7 +2075,7 @@
 <div class="note">OK for responses received by the resolver (no unit test yet):</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l39">mirage/mdns_resolver_mirage.ml:39</a></div>
 <div class="note">OK for responses received by the responder (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l586">mirage/mdns_responder.ml:586</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586">lwt/mdns_responder.ml:586</a></div>
 </div>
 
 <span class="label">s18.5_p2_c1</span>In multicast response messages, the TC bit MUST be zero on transmission, and MUST be ignored on reception.</div>
@@ -2091,16 +2091,16 @@
 <div class="clause must" id="s18.6_p1_c1"><a name="s18.6_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.6_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.6_p1_c1'), 'hover')">
 <div class="note">OK for queries sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l121">mirage/mdns_resolver_mirage.ml:121</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 <div class="note">OK for queries received (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l465">mirage/mdns_responder.ml:465</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l465">lwt/mdns_responder.ml:465</a></div>
 <div class="note">Not guaranteed for responses sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l49">lib/query.ml:49</a></div>
 <div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l73">lib_test/ounit/test_mdns_responder.ml:73</a></div>
 <div class="note">OK for responses received by the resolver (no unit test yet):</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l39">mirage/mdns_resolver_mirage.ml:39</a></div>
 <div class="note">OK for responses received by the responder (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l586">mirage/mdns_responder.ml:586</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586">lwt/mdns_responder.ml:586</a></div>
 </div>
 
 <span class="label">s18.6_p1_c1</span>In both multicast query and multicast response messages, the Recursion Desired bit SHOULD be zero on transmission, and MUST be ignored on reception.</div>
@@ -2112,16 +2112,16 @@
 <div class="clause must" id="s18.7_p1_c1"><a name="s18.7_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.7_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.7_p1_c1'), 'hover')">
 <div class="note">OK for queries sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l121">mirage/mdns_resolver_mirage.ml:121</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 <div class="note">OK for queries received (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l465">mirage/mdns_responder.ml:465</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l465">lwt/mdns_responder.ml:465</a></div>
 <div class="note">OK for responses sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l49">lib/query.ml:49</a></div>
 <div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l73">lib_test/ounit/test_mdns_responder.ml:73</a></div>
 <div class="note">OK for responses received by the resolver (no unit test yet):</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l39">mirage/mdns_resolver_mirage.ml:39</a></div>
 <div class="note">OK for responses received by the responder (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l586">mirage/mdns_responder.ml:586</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l586">lwt/mdns_responder.ml:586</a></div>
 </div>
 
 <span class="label">s18.7_p1_c1</span>In both multicast query and multicast response messages, the Recursion Available bit MUST be zero on transmission, and MUST be ignored on reception.</div>
@@ -2175,7 +2175,7 @@
 <div class="clause must" id="s18.11_p1_c1"><a name="s18.11_p1_c1" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.11_p1_c1'), 'hover')" onmouseover="addClass(document.getElementById('s18.11_p1_c1'), 'hover')">
 <div class="note">OK for queries sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l121">mirage/mdns_resolver_mirage.ml:121</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l368">lib_test/ounit/test_mdns_resolver.ml:368</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l368">lib_test/ounit/test_mdns_resolver_mirage.ml:368</a></div>
 <div class="note">OK for responses sent:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib/query.ml#l49">lib/query.ml:49</a></div>
 <div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_responder.ml#l73">lib_test/ounit/test_mdns_responder.ml:73</a></div>
@@ -2184,10 +2184,10 @@
 <span class="label">s18.11_p1_c1</span>In both multicast query and multicast response messages, the Response Code MUST be zero on transmission.</div>
 <div class="clause must" id="s18.11_p1_c2"><a name="s18.11_p1_c2" /><div class="notes" onmouseout="removeClass(document.getElementById('s18.11_p1_c2'), 'hover')" onmouseover="addClass(document.getElementById('s18.11_p1_c2'), 'hover')">
 <div class="note">OK for messages received by the responder (no unit test yet):</div>
-<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_responder.ml#l626">mirage/mdns_responder.ml:626</a></div>
+<div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/lwt/mdns_responder.ml#l626">lwt/mdns_responder.ml:626</a></div>
 <div class="note">OK for responses received by the resolver:</div>
 <div class="coderef">impl: <a href="https://github.com/infidel/ocaml-dns/blob/master/mirage/mdns_resolver_mirage.ml#l58">mirage/mdns_resolver_mirage.ml:58</a></div>
-<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver.ml#l420">lib_test/ounit/test_mdns_resolver.ml:420</a></div>
+<div class="coderef">test: <a href="https://github.com/infidel/ocaml-dns/blob/master/lib_test/ounit/test_mdns_resolver_mirage.ml#l420">lib_test/ounit/test_mdns_resolver_mirage.ml:420</a></div>
 </div>
 
 <span class="label">s18.11_p1_c2</span>Multicast DNS messages received with non-zero Response Codes MUST be silently ignored.</div>
