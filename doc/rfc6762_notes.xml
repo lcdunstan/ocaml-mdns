@@ -1133,7 +1133,7 @@
 <linesub end="35281" start="35176">particular record does not exist.</linesub>
 <notes>
     <note>No answer is added to the response when NXDomain. No response is sent when no answers are available:</note>
-    <coderef type="impl" repo="dns" path="lib/query.ml" name="process_query" line="517" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_query" line="517" />
     <note type="todo">Tested only indirectly by unit tests.</note>
 </notes>
 </clause>
@@ -4608,7 +4608,7 @@
     <coderef type="test" repo="dns" path="lib_test/ounit/test_query.ml" name="answer-mdns-A" line="135" />
     <note>OK for responses received:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="440" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="response-validation" line="440" />
 </notes>
 </clause>
 </paragraph>
@@ -4636,7 +4636,7 @@
 <notes>
     <note>OK:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="120" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
 </notes>
 </clause>
 <clause id="s18.2_p1_c2" importance="must" num="2">
@@ -4660,7 +4660,7 @@
 <notes>
     <note>OK for queries:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="120" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
     <note>OK for responses:</note>
     <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="48" />
     <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
@@ -4672,9 +4672,9 @@
 <notes>
     <note>OK for responses received by the resolver:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="57" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="418" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="response-validation" line="418" />
     <note type="todo">OK for responses received by the responder (but no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process" line="623" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process" line="623" />
 </notes>
 </clause>
 </paragraph>
@@ -4689,9 +4689,9 @@
 <notes>
     <note>OK for queries sent:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
     <note type="todo">OK for queries received (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_answer" line="465" />
 </notes>
 </clause>
 </paragraph>
@@ -4709,7 +4709,7 @@
     <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="57" />
     <note type="todo">OK for responses received by the responder (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_response" line="586" />
 </notes>
 </clause>
 </paragraph>
@@ -4744,7 +4744,7 @@
     <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
     <note type="todo">OK for responses received by the responder (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_response" line="586" />
 </notes>
 </clause>
 </paragraph>
@@ -4769,16 +4769,16 @@
 <notes>
     <note>OK for queries sent:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
     <note type="todo">OK for queries received (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_answer" line="465" />
     <note type="todo">Not guaranteed for responses sent:</note>
     <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
     <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
     <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
     <note type="todo">OK for responses received by the responder (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_response" line="586" />
 </notes>
 </clause>
 </paragraph>
@@ -4794,16 +4794,16 @@
 <notes>
     <note>OK for queries sent:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
     <note type="todo">OK for queries received (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="get_answer" line="465" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="get_answer" line="465" />
     <note>OK for responses sent:</note>
     <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
     <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
     <note type="todo">OK for responses received by the resolver (no unit test yet):</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="39" />
     <note type="todo">OK for responses received by the responder (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process_response" line="586" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process_response" line="586" />
 </notes>
 </clause>
 </paragraph>
@@ -4871,7 +4871,7 @@
 <notes>
     <note>OK for queries sent:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="create_packet" line="121" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="gethostbyname-success" line="368" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="gethostbyname-success" line="368" />
     <note>OK for responses sent:</note>
     <coderef type="impl" repo="dns" path="lib/query.ml" name="response_of_answer" line="49" />
     <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_responder.ml" name="q-A-AAAA" line="73" />
@@ -4882,10 +4882,10 @@
 <linesub end="133028" start="132917">with non-zero Response Codes MUST be silently ignored.</linesub>
 <notes>
     <note type="todo">OK for messages received by the responder (no unit test yet):</note>
-    <coderef type="impl" repo="dns" path="mirage/mdns_responder.ml" name="process" line="626" />
+    <coderef type="impl" repo="dns" path="lwt/mdns_responder.ml" name="process" line="626" />
     <note>OK for responses received by the resolver:</note>
     <coderef type="impl" repo="dns" path="mirage/mdns_resolver_mirage.ml" name="packet_matches" line="58" />
-    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver.ml" name="response-validation" line="420" />
+    <coderef type="test" repo="dns" path="lib_test/ounit/test_mdns_resolver_mirage.ml" name="response-validation" line="420" />
 </notes>
 </clause>
 </paragraph>
