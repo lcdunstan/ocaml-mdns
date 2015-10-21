@@ -135,11 +135,11 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 1 0 0;
 
         let a = List.hd packet.answers in
-        assert_equal ~msg:"name" "mirage1.local" (domain_name_to_string a.name);
+        assert_equal ~msg:"name" "mirage1.local" (to_string a.name);
         assert_equal ~msg:"cls" RR_IN a.cls;
         assert_equal ~msg:"flush" false a.flush;
         assert_equal ~msg:"ttl" (Int32.of_int 120) a.ttl;
@@ -175,17 +175,17 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "10.0.0.1" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 12345 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         assert_packet ~id:0x1df9 packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=true; ra=false; rcode=NoError} 1 1 0 0;
 
         let q = List.hd packet.questions in
-        assert_equal ~msg:"q_name" "mirage1.local" (domain_name_to_string q.q_name);
+        assert_equal ~msg:"q_name" "mirage1.local" (to_string q.q_name);
         assert_equal ~msg:"q_type" Q_A q.q_type;
         assert_equal ~msg:"q_class" Q_IN q.q_class;
         assert_equal ~msg:"q_unicast" Q_Normal q.q_unicast;
 
         let a = List.hd packet.answers in
-        assert_equal ~msg:"name" "mirage1.local" (domain_name_to_string a.name);
+        assert_equal ~msg:"name" "mirage1.local" (to_string a.name);
         assert_equal ~msg:"cls" RR_IN a.cls;
         assert_equal ~msg:"flush" false a.flush;
         assert_equal ~msg:"ttl" (Int32.of_int 120) a.ttl;
@@ -220,7 +220,7 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 3 0 6;
 
         (* Verify the PTR records *)
@@ -232,13 +232,13 @@ let tests =
             | [] -> rest;
             | rr::tl ->
               begin
-                assert_equal ~msg:"name" ~printer:(fun s -> s) "_snake._tcp.local" (domain_name_to_string rr.name);
+                assert_equal ~msg:"name" ~printer:(fun s -> s) "_snake._tcp.local" (to_string rr.name);
                 assert_equal ~msg:"cls" RR_IN rr.cls;
                 assert_equal ~msg:"flush" false rr.flush;
                 assert_equal ~msg:"ttl" ~printer:Int32.to_string (Int32.of_int 120) rr.ttl;
                 match rr.rdata with
                 | PTR name ->
-                  get_ptr_list tl ((domain_name_to_string name) :: rest)
+                  get_ptr_list tl ((to_string name) :: rest)
                 | _ -> assert_failure "Not PTR";
               end
           end
@@ -258,13 +258,13 @@ let tests =
         let txt_assoc = List.combine ptrl ["species=Pseudonaja affinis"; "species=Pseudechis australis"; "species=Notechis scutatus"] in
         let a_assoc = List.combine srvl ["127.0.0.95"; "127.0.0.96"; "127.0.0.94"] in
         List.iter (fun rr ->
-            let key = String.lowercase (domain_name_to_string rr.name) in
+            let key = String.lowercase (to_string rr.name) in
             match rr.rdata with
             | SRV (priority, weight, port, srv) ->
               assert_equal 0 priority;
               assert_equal 0 weight;
               assert_equal 33333 port;
-              assert_equal ~printer:(fun s -> s) (List.assoc key srv_assoc) (domain_name_to_string srv)
+              assert_equal ~printer:(fun s -> s) (List.assoc key srv_assoc) (to_string srv)
             | TXT txtl ->
               assert_equal 2 (List.length txtl);
               assert_equal "txtvers=1" (List.hd txtl);
@@ -315,11 +315,11 @@ let tests =
         let module H = Dns.Hashcons in
         let name = string_to_domain_name "mirage1.local" in
         begin
-          let key = canon2key name in
+          let key = Dns.Name.to_key name in
           match Dns.Trie.simple_lookup key (Server.trie server) with
           | None -> assert_failure "mirage1.local not found";
           | Some node ->
-            assert_equal ~msg:"owner" ~printer:(fun s -> s) "mirage1.local" (domain_name_to_string node.DR.owner.H.node);
+            assert_equal ~msg:"owner" ~printer:(fun s -> s) "mirage1.local" (to_string node.DR.owner.H.node);
         end;
 
         (* Add a unique hostname *)
@@ -328,11 +328,11 @@ let tests =
         let name = string_to_domain_name unique_name_str in
         Server.add_unique_hostname server name unique_ip;
         begin
-          let key = canon2key name in
+          let key = Dns.Name.to_key name in
           match Dns.Trie.simple_lookup key (Server.trie server) with
           | None -> assert_failure "unique.local not found";
           | Some node ->
-            assert_equal ~msg:"owner" ~printer:(fun s -> s) unique_name_str (domain_name_to_string node.DR.owner.H.node);
+            assert_equal ~msg:"owner" ~printer:(fun s -> s) unique_name_str (to_string node.DR.owner.H.node);
         end
       );
 
@@ -376,9 +376,9 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:unique.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
-        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (Dns.Packet.to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
 
@@ -416,12 +416,12 @@ let tests =
         assert_equal ~msg:"#txlist announce" ~printer:string_of_int 4 (List.length !txlist);
         let (txaddr4, txbuf) = List.hd !txlist in
         assert_equal ~msg:"txaddr4" txaddr txaddr4;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 18 0 0;
 
         (* Verify that the cache flush bit is set on the announced unique record *)
-        let rr = List.find (fun rr -> (domain_name_to_string rr.name) = "unique.local") packet.answers in
-        assert_equal ~msg:"unique name" ~printer:(fun s -> s) "unique.local" (domain_name_to_string rr.name);
+        let rr = List.find (fun rr -> (to_string rr.name) = "unique.local") packet.answers in
+        assert_equal ~msg:"unique name" ~printer:(fun s -> s) "unique.local" (to_string rr.name);
         assert_equal ~msg:"unique cls" RR_IN rr.cls;
         assert_equal ~msg:"unique flush" true rr.flush;
         assert_equal ~msg:"unique ttl" (Int32.of_int 120) rr.ttl;
@@ -478,9 +478,9 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:unique.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
-        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (Dns.Packet.to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
 
@@ -493,7 +493,7 @@ let tests =
           detail= {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError};
           questions=[]; answers=[answer]; authorities=[]; additionals=[];
         } in
-        let response_buf = marshal (Dns.Buf.create 512) response in
+        let response_buf = Dns.Packet.marshal (Dns.Buf.create 512) response in
         let _ = Server.process server ~src:(response_src_ip, 5353) ~dst:txaddr response_buf in
 
         (* A new probe cycle begins *)
@@ -504,9 +504,9 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique2.local. <ANY_TYP|IN|QU>> <an:> <au:unique2.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
-        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (Dns.Packet.to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
         (* Ignore the rest of the cycle *)
@@ -556,9 +556,9 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         let expected = "0000 Query:0 na:c:nr:rn 0 <qs:unique.local. <ANY_TYP|IN|QU>> <an:> <au:unique.local <IN,flush|120> [A (1.2.3.4)]> <ad:>" in
-        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (Dns.Packet.to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"second sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
 
@@ -573,7 +573,7 @@ let tests =
           detail= {qr=Query; opcode=Standard; aa=false; tc=false; rd=false; ra=false; rcode=NoError};
           questions=[question]; answers=[]; authorities=[auth]; additionals=[];
         } in
-        let query_buf = marshal (Dns.Buf.create 512) query in
+        let query_buf = Dns.Packet.marshal (Dns.Buf.create 512) query in
         let _ = Server.process server ~src:(conflict_src_ip, 5353) ~dst:txaddr query_buf in
 
         (* One-second delay before restarting the probe cycle *)
@@ -591,9 +591,9 @@ let tests =
         let (txip, txport) = txaddr in
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         (* Note that the hostname has not changed because that only occurs when we see an actual response *)
-        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (to_string packet);
+        assert_equal ~msg:"rr" ~printer:(fun s -> s) expected (Dns.Packet.to_string packet);
         (* Verify the sleep duration *)
         assert_equal ~msg:"restart sleep should be 250 ms" ~printer:string_of_float 0.25 (List.hd !sleepl);
         (* Ignore the rest of the cycle *)
@@ -634,7 +634,7 @@ let tests =
         assert_equal ~printer:(fun s -> s) "224.0.0.251" (Ipaddr.V4.to_string txip);
         assert_equal ~printer:string_of_int 5353 txport;
         assert_equal ~msg:"first sleep should be 1 second" ~printer:string_of_float 1.0 (List.nth !sleepl 1);
-        let packet = parse txbuf in
+        let packet = Dns.Packet.parse txbuf in
         assert_packet packet {qr=Response; opcode=Standard; aa=true; tc=false; rd=false; ra=false; rcode=NoError} 0 17 0 0;
 
         let sorted = packet.answers |> List.map rr_to_string |> List.sort String.compare in
