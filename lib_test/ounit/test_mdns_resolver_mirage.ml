@@ -11,7 +11,7 @@ let run_timeout thread =
       thread
     ])
 
-module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
+module StubIpv4 = struct
   type error = [
     | `Unknown of string (** an undiagnosed error *)
     | `Unimplemented     (** operation not yet implemented in the code *)
@@ -21,6 +21,7 @@ module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
   type 'a io = 'a Lwt.t
   type buffer = Cstruct.t
   type ipaddr = Ipaddr.V4.t
+  type uipaddr = Ipaddr.t
   type prefix = Ipaddr.V4.t
   type callback = src:ipaddr -> dst:ipaddr -> buffer -> unit Lwt.t
 
@@ -30,6 +31,9 @@ module StubIpv4 : V1_LWT.IPV4 with type ethif = unit = struct
     mutable netmask: Ipaddr.V4.t;
     mutable gateways: Ipaddr.V4.t list;
   }
+
+  let to_uipaddr a = Ipaddr.V4 a
+  let of_uipaddr = Ipaddr.to_v4
 
   let input_arpv4 t buf = return_unit
 
@@ -138,7 +142,7 @@ module MockUdpv4 (*: V1_LWT.UDPV4 with type ip = StubIpv4.t*) = struct
 end
 
 
-module StubTcpv4 : V1_LWT.TCPV4 with type ip = StubIpv4.t = struct
+module StubTcpv4 = struct
   type flow = unit (*Pcb.pcb*)
   type ip = StubIpv4.t
   type ipaddr = StubIpv4.ipaddr
